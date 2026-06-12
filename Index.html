@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>300m Walking Quest</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <style>
         body, html {
             margin: 0;
@@ -14,11 +17,11 @@
         #map {
             width: 100%;
             height: 100%;
+            z-index: 1; /* ป้องกันแผนที่บัง UI */
         }
-        /* UI Overlay สำหรับแสดงสถานะเกม */
         #ui-panel {
             position: absolute;
-            bottom: 20px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             background: white;
@@ -26,7 +29,7 @@
             border-radius: 30px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             text-align: center;
-            z-index: 10;
+            z-index: 1000; /* ให้อยู่เหนือแผนที่ */
             min-width: 250px;
         }
         .distance-text {
@@ -67,6 +70,7 @@
         <button id="start-btn" onclick="startTracking()">เริ่มออกเดินทาง</button>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let map;
         let watchId;
@@ -76,39 +80,33 @@
         let lastPosition = null;
         let userMarker = null;
 
-        // ฟังก์ชันเริ่มต้นสร้างแผนที่
+        // ฟังก์ชันเริ่มต้นสร้างแผนที่ OpenStreetMap
         function initMap() {
             // ตั้งค่าเริ่มต้นที่กรุงเทพฯ
-            const defaultLocation = { lat: 13.7563, lng: 100.5018 };
-            map = new google.maps.Map(document.getElementById("map"), {
-                zoom: 18,
-                center: defaultLocation,
-                disableDefaultUI: true, // ซ่อน UI เดิมของ Google Maps เพื่อความสะอาดตา
-                zoomControl: true
-            });
+            map = L.map('map').setView([13.7563, 100.5018], 18);
+
+            // โหลดแผนที่จาก OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
 
             // สร้างเส้นทาง (Polyline)
-            polyline = new google.maps.Polyline({
-                path: pathCoordinates,
-                geodesic: true,
-                strokeColor: "#3498db",
-                strokeOpacity: 1.0,
-                strokeWeight: 5,
-            });
-            polyline.setMap(map);
+            polyline = L.polyline(pathCoordinates, {color: '#3498db', weight: 5}).addTo(map);
         }
 
-        // เริ่มติดตามตำแหน่ง
+        // เรียกใช้งานแผนที่ทันที
+        initMap();
+
         function startTracking() {
             if (!navigator.geolocation) {
-                alert("เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง (Geolocation)");
+                alert("เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง");
                 return;
             }
 
             document.getElementById("start-btn").innerText = "กำลังติดตามพิกัด...";
             document.getElementById("start-btn").disabled = true;
 
-            // ใช้ watchPosition เพื่อติดตามพิกัดตลอดเวลา
             watchId = navigator.geolocation.watchPosition(
                 updatePosition, 
                 handleError, 
@@ -116,59 +114,49 @@
             );
         }
 
-        // อัปเดตเมื่อตำแหน่งเปลี่ยน
         function updatePosition(position) {
             const currentLat = position.coords.latitude;
             const currentLng = position.coords.longitude;
-            const currentLoc = new google.maps.LatLng(currentLat, currentLng);
+            const currentLoc = [currentLat, currentLng];
 
             // เลื่อนกล้องแผนที่ตามผู้ใช้
-            map.panTo(currentLoc);
+            map.setView(currentLoc, 18);
 
             // อัปเดต Marker ผู้เล่น
             if (!userMarker) {
-                userMarker = new google.maps.Marker({
-                    position: currentLoc,
-                    map: map,
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 8,
-                        fillColor: "#e74c3c",
-                        fillOpacity: 1,
-                        strokeWeight: 2,
-                        strokeColor: "#ffffff"
-                    }
-                });
+                userMarker = L.circleMarker(currentLoc, {
+                    radius: 8,
+                    fillColor: "#e74c3c",
+                    color: "#ffffff",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 1
+                }).addTo(map);
             } else {
-                userMarker.setPosition(currentLoc);
+                userMarker.setLatLng(currentLoc);
             }
 
-            // คำนวณระยะทางหากมีตำแหน่งก่อนหน้า
             if (lastPosition) {
                 const distanceAdded = calculateDistanceInMeters(
                     lastPosition.lat, lastPosition.lng, 
                     currentLat, currentLng
                 );
                 
-                // กรองค่า GPS ที่กระโดดเกินไป (GPS Drift)
-                // ถ้าระยะห่างต่อครั้งน้อยกว่า 0.5 เมตร ไม่ต้องนับ
+                // กรองค่า GPS ที่กระโดดเกินไป
                 if (distanceAdded > 0.5) {
                     totalDistance += distanceAdded;
                     document.getElementById("current-distance").innerText = totalDistance.toFixed(2);
                     
-                    // เพิ่มจุดลงในเส้นทาง
                     pathCoordinates.push(currentLoc);
-                    polyline.setPath(pathCoordinates);
+                    polyline.setLatLngs(pathCoordinates);
                 }
             } else {
-                // จุดเริ่มต้น
                 pathCoordinates.push(currentLoc);
-                polyline.setPath(pathCoordinates);
+                polyline.setLatLngs(pathCoordinates);
             }
 
             lastPosition = { lat: currentLat, lng: currentLng };
 
-            // ตรวจสอบเงื่อนไขชนะ
             if (totalDistance >= 300) {
                 navigator.geolocation.clearWatch(watchId);
                 document.getElementById("start-btn").innerText = "ภารกิจสำเร็จ! 🎉";
@@ -177,9 +165,8 @@
             }
         }
 
-        // สูตร Haversine คำนวณระยะทางระหว่างพิกัด 2 จุดเป็นเมตร
         function calculateDistanceInMeters(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // รัศมีโลก (เมตร)
+            const R = 6371e3;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -193,7 +180,5 @@
             console.warn(`ERROR(${error.code}): ${error.message}`);
         }
     </script>
-    
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&callback=initMap"></script>
 </body>
 </html>
