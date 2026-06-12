@@ -3,218 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>300m Walking Quest</title>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
+    <title>Web App สะสมแต้ม</title>
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
+        /* ส่วนของการตกแต่งหน้าตา (CSS) */
+        body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #111; /* เปลี่ยนพื้นหลังตอนโหลดเป็นสีดำ */
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
-        #map {
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-        /* ปรับ UI ให้เข้ากับธีมเกมดาร์กโหมด */
-        #ui-panel {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(30, 40, 50, 0.95);
-            padding: 15px 25px;
+        .reward-card {
+            background: white;
+            padding: 30px;
             border-radius: 20px;
-            box-shadow: 0 0 20px rgba(0, 255, 200, 0.2);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             text-align: center;
-            z-index: 1000;
-            min-width: 260px;
-            border: 1px solid #00ffcc;
+            max-width: 350px;
+            width: 90%;
         }
-        .distance-text {
-            font-size: 28px;
-            font-weight: bold;
-            color: #00ffcc; /* สีเขียวเรืองแสงแบบ Sci-fi */
-            text-shadow: 0 0 10px rgba(0, 255, 200, 0.5);
+        .reward-card h2 {
+            color: #333;
+            margin-top: 0;
         }
-        .target-text {
+        .reward-card p {
+            color: #666;
             font-size: 14px;
-            color: #a0b0c0;
-            margin-top: 5px;
         }
-        #start-btn {
-            background-color: #00ffcc;
-            color: #111;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 15px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 15px;
-            width: 100%;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        /* ตารางสแตมป์ */
+        .stamp-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+        }
+        .stamp-slot {
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+            border: 2px dashed #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #cbd5e1;
             transition: all 0.3s ease;
         }
-        #start-btn:active {
-            transform: scale(0.95);
+        /* สแตมป์ที่ได้รับแล้ว */
+        .stamp-slot.active {
+            background-color: #10b981;
+            border-color: #10b981;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+            transform: scale(1.1);
         }
-        #start-btn:disabled {
-            background-color: #34495e;
-            color: #7f8c8d;
-            cursor: not-allowed;
-            border: 1px solid #2c3e50;
-            box-shadow: none;
+        .status-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
         }
+        /* ปุ่มกด */
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: 0.2s;
+        }
+        .btn-add {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .btn-add:hover { background-color: #2563eb; }
+        
+        .btn-redeem {
+            background-color: #ef4444;
+            color: white;
+        }
+        .btn-redeem:hover { background-color: #dc2626; }
     </style>
 </head>
 <body>
 
-    <div id="map"></div>
-
-    <div id="ui-panel">
-        <div class="distance-text"><span id="current-distance">0.00</span> / 300m</div>
-        <div class="target-text">MISSION: Explore the area</div>
-        <button id="start-btn" onclick="startTracking()">START MISSION</button>
+    <div class="reward-card">
+        <h2>🎉 บัตรสะสมแต้ม</h2>
+        <p>สะสมครบ 10 แต้ม เพื่อรับสิทธิพิเศษ!</p>
+        
+        <!-- พื้นที่แสดงสแตมป์ -->
+        <div class="stamp-grid" id="stampGrid"></div>
+        
+        <div class="status-text" id="statusText">แต้มปัจจุบัน: 0 / 10</div>
+        
+        <!-- ในการใช้งานจริง ปุ่มนี้อาจซ่อนไว้ให้เฉพาะพนักงานกด หรือเปลี่ยนเป็นระบบสแกน QR -->
+        <button class="btn-add" onclick="addStamp()">➕ จำลองการกดรับแต้ม</button>
+        <button class="btn-redeem" onclick="redeemReward()">🎁 แลกของรางวัล (เริ่มใหม่)</button>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let map;
-        let watchId;
-        let pathCoordinates = [];
-        let polyline;
-        let totalDistance = 0;
-        let lastPosition = null;
-        let userMarker = null;
+        // ส่วนของระบบการทำงาน (JavaScript)
+        const MAX_STAMPS = 10;
+        
+        // ดึงข้อมูลแต้มเดิมจาก Local Storage ของเบราว์เซอร์ ถ้าไม่มีให้เริ่มที่ 0
+        let currentStamps = parseInt(localStorage.getItem('myRewardStamps')) || 0;
 
-        function initMap() {
-            // สร้างแผนที่เปล่าๆ ไว้ก่อน (จะเลื่อนไปหาผู้ใช้เองเมื่อดึงพิกัดสำเร็จ)
-            map = L.map('map');
-
-            // ใช้ Tile Layer โทนดาร์กโหมด (CartoDB Dark Matter) ให้ความรู้สึกเหมือนแผนที่ในเกม
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                maxZoom: 20,
-                attribution: '© OpenStreetMap & © CARTO'
-            }).addTo(map);
-
-            // วาดเส้นทางเป็นสีเขียวสะท้อนแสงให้เข้ากับธีม
-            polyline = L.polyline(pathCoordinates, {
-                color: '#00ffcc', 
-                weight: 6,
-                opacity: 0.8,
-                dashArray: '10, 10' // ทำให้เส้นเป็นรอยปะเหมือนทางเดิน
-            }).addTo(map);
-
-            // สั่งให้แผนที่ขอพิกัดปัจจุบันเพื่อซูมไปหาผู้ใช้ทันทีที่โหลดเว็บเสร็จ
-            map.locate({setView: true, maxZoom: 18});
-
-            // กรณีดึงพิกัดเริ่มต้นสำเร็จ ให้ปักหมุดไว้ก่อน
-            map.on('locationfound', function(e) {
-                if (!userMarker) {
-                    createUserMarker(e.latlng);
+        // ฟังก์ชันวาดหน้าตาสแตมป์
+        function renderStamps() {
+            const grid = document.getElementById('stampGrid');
+            grid.innerHTML = ''; // ล้างค่าเดิมก่อน
+            
+            for (let i = 1; i <= MAX_STAMPS; i++) {
+                const slot = document.createElement('div');
+                // ถ้าจำนวนที่วนลูปอยู่น้อยกว่าหรือเท่ากับแต้มที่มี ให้ใส่คลาส active (สีเขียว)
+                if (i <= currentStamps) {
+                    slot.className = 'stamp-slot active';
+                    slot.innerHTML = '⭐'; // ใส่ไอคอนดาวเมื่อมีแต้ม
+                } else {
+                    slot.className = 'stamp-slot';
+                    slot.innerHTML = i; // ใส่ตัวเลขถ้ายังว่าง
                 }
-            });
+                grid.appendChild(slot);
+            }
+            
+            // อัปเดตข้อความตัวเลข
+            document.getElementById('statusText').innerText = `แต้มปัจจุบัน: ${currentStamps} / ${MAX_STAMPS}`;
         }
 
-        function createUserMarker(latlng) {
-            userMarker = L.circleMarker(latlng, {
-                radius: 10,
-                fillColor: "#00ffcc",
-                color: "#ffffff",
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8
-            }).addTo(map);
+        // ฟังก์ชันเพิ่มแต้ม
+        function addStamp() {
+            if (currentStamps < MAX_STAMPS) {
+                currentStamps++;
+                localStorage.setItem('myRewardStamps', currentStamps); // บันทึกลงเบราว์เซอร์
+                renderStamps();
+                
+                // แจ้งเตือนเมื่อแต้มครบ
+                if (currentStamps === MAX_STAMPS) {
+                    setTimeout(() => {
+                        alert('ยินดีด้วย! คุณสะสมแต้มครบ 10 แต้มแล้ว มารับของรางวัลได้เลยครับ!');
+                    }, 300);
+                }
+            } else {
+                alert('คุณสะสมแต้มเต็มแล้ว! กรุณากดแลกรางวัลก่อนเริ่มรอบใหม่ครับ');
+            }
         }
 
-        initMap();
-
-        function startTracking() {
-            if (!navigator.geolocation) {
-                alert("เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง");
+        // ฟังก์ชันแลกรางวัลและรีเซ็ตแต้ม
+        function redeemReward() {
+            if (currentStamps === 0) {
+                alert('คุณยังไม่มีแต้มให้แลกรางวัลครับ');
                 return;
             }
-
-            document.getElementById("start-btn").innerText = "TRACKING...";
-            document.getElementById("start-btn").disabled = true;
-
-            // รีเซ็ตค่าระยะทางเผื่อมีการเริ่มใหม่
-            totalDistance = 0;
-            lastPosition = null;
-            pathCoordinates = [];
-            polyline.setLatLngs(pathCoordinates);
-
-            watchId = navigator.geolocation.watchPosition(
-                updatePosition, 
-                handleError, 
-                { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-            );
-        }
-
-        function updatePosition(position) {
-            const currentLat = position.coords.latitude;
-            const currentLng = position.coords.longitude;
-            const currentLoc = [currentLat, currentLng];
-
-            map.setView(currentLoc, 18);
-
-            if (!userMarker) {
-                createUserMarker(currentLoc);
-            } else {
-                userMarker.setLatLng(currentLoc);
-            }
-
-            if (lastPosition) {
-                const distanceAdded = calculateDistanceInMeters(
-                    lastPosition.lat, lastPosition.lng, 
-                    currentLat, currentLng
-                );
-                
-                // กรองค่า GPS (เริ่มนับเมื่อมีการขยับเกิน 1 เมตร เพื่อลดปัญหา GPS แกว่งตอนยืนเฉยๆ)
-                if (distanceAdded > 1) {
-                    totalDistance += distanceAdded;
-                    document.getElementById("current-distance").innerText = totalDistance.toFixed(2);
-                    
-                    pathCoordinates.push(currentLoc);
-                    polyline.setLatLngs(pathCoordinates);
-                }
-            } else {
-                // จุดเริ่มต้นของการแทร็ก
-                pathCoordinates.push(currentLoc);
-                polyline.setLatLngs(pathCoordinates);
-            }
-
-            lastPosition = { lat: currentLat, lng: currentLng };
-
-            if (totalDistance >= 300) {
-                navigator.geolocation.clearWatch(watchId);
-                document.getElementById("start-btn").innerText = "MISSION COMPLETED! 🎉";
-                document.getElementById("start-btn").style.backgroundColor = "#f39c12";
-                document.getElementById("start-btn").style.color = "#fff";
-                alert("ยินดีด้วย! ภารกิจเดินสำรวจ 300 เมตรสำเร็จแล้ว");
+            
+            if (confirm('ต้องการแลกของรางวัลและรีเซ็ตแต้มเป็น 0 ใช่หรือไม่?')) {
+                currentStamps = 0;
+                localStorage.setItem('myRewardStamps', currentStamps);
+                renderStamps();
             }
         }
 
-        function calculateDistanceInMeters(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
-
-        function handleError(error) {
-            console.warn(`ERROR(${error.code}): ${error.message}`);
-        }
+        // เรียกใช้งานฟังก์ชันวาดสแตมป์ครั้งแรกตอนเปิดหน้าเว็บ
+        renderStamps();
     </script>
+
 </body>
 </html>
