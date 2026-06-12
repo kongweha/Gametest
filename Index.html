@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web App สะสมแต้ม (สแกน QR)</title>
+    <title>ระบบสะสมแต้มด้วยรหัส 10 หลัก</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body {
@@ -17,7 +17,7 @@
             padding: 20px;
             box-sizing: border-box;
         }
-        .reward-card {
+        .container {
             background: white;
             padding: 30px;
             border-radius: 20px;
@@ -26,9 +26,36 @@
             max-width: 400px;
             width: 100%;
         }
-        .reward-card h2 { color: #333; margin-top: 0; }
-        .reward-card p { color: #666; font-size: 14px; }
+        h2 { color: #333; margin-top: 0; }
+        p { color: #666; font-size: 14px; }
         
+        /* สไตล์ของฟอร์มกรอกรหัส (Login) */
+        .input-group {
+            margin: 20px 0;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #475569;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 18px;
+            box-sizing: border-box;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+        .input-group input:focus {
+            border-color: #3b82f6;
+            outline: none;
+        }
+
+        /* ตารางสแตมป์ */
         .stamp-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -60,7 +87,18 @@
             color: #333;
             margin-bottom: 20px;
         }
+        .user-info {
+            background-color: #e2e8f0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #475569;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
         
+        /* ปุ่มต่างๆ */
         button {
             padding: 12px 20px;
             border: none;
@@ -72,47 +110,99 @@
             margin-bottom: 10px;
             transition: 0.2s;
         }
-        .btn-scan { background-color: #3b82f6; color: white; }
-        .btn-scan:hover { background-color: #2563eb; }
+        .btn-primary { background-color: #3b82f6; color: white; }
+        .btn-primary:hover { background-color: #2563eb; }
         .btn-cancel { background-color: #64748b; color: white; display: none; }
-        .btn-redeem { background-color: #ef4444; color: white; margin-top: 20px;}
-        
-        /* ส่วนแสดงกล้อง */
+        .btn-redeem { background-color: #ef4444; color: white; margin-top: 15px;}
+        .btn-logout { background-color: #94a3b8; color: white; margin-top: 10px; font-size: 14px; padding: 8px;}
+
         #reader {
             width: 100%;
             margin-bottom: 15px;
-            display: none; /* ซ่อนไว้ก่อน จะแสดงเมื่อกดปุ่มสแกน */
+            display: none;
             border-radius: 10px;
             overflow: hidden;
         }
+
+        /* ซ่อนหน้าเว็บส่วนที่ยังไม่ได้ล็อกอิน */
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="reward-card">
-        <h2>🎉 บัตรสะสมแต้ม</h2>
-        <p>สแกน QR Code ที่จุดบริการเพื่อรับแต้ม</p>
+    <div class="container" id="loginScreen">
+        <h2>🔐 เข้าสู่ระบบสะสมแต้ม</h2>
+        <p>กรุณากรอกรหัสสมาชิก 10 หลักของคุณเพื่อดำเนินการต่อ</p>
+        
+        <div class="input-group">
+            <label for="userCode">รหัสสมาชิก (10 หลัก):</label>
+            <input type="tel" id="userCode" maxlength="10" placeholder="0123456789" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+        </div>
+        
+        <button class="container-btn btn-primary" onclick="login()">ตกลงเพื่อเข้าสู่ระบบ</button>
+    </div>
+
+    <div class="container hidden" id="stampScreen">
+        <h2>🎉 บัตรสะสมแต้มของคุณ</h2>
+        <div class="user-info" id="displayUserCode">รหัสสมาชิก: XXXXXXXXXX</div>
         
         <div class="stamp-grid" id="stampGrid"></div>
         <div class="status-text" id="statusText">แต้มปัจจุบัน: 0 / 10</div>
         
         <div id="reader"></div>
 
-        <button id="btnScan" class="btn-scan" onclick="startScan()">📷 เปิดกล้องสแกนรับแต้ม</button>
+        <button id="btnScan" class="btn-primary" onclick="startScan()">📷 เปิดกล้องสแกนรับแต้ม</button>
         <button id="btnCancel" class="btn-cancel" onclick="stopScan()">❌ ยกเลิกการสแกน</button>
         
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-        <button class="btn-redeem" onclick="redeemReward()">🎁 แลกของรางวัล (เริ่มใหม่)</button>
+        <button class="btn-redeem" onclick="redeemReward()">🎁 แลกของรางวัล (รีเซ็ตแต้มรหัสนี้)</button>
+        <button class="btn-logout" onclick="logout()">Logout ออกจากระบบ</button>
     </div>
 
     <script>
         const MAX_STAMPS = 10;
-        // กำหนด "รหัสลับ" ที่ซ่อนอยู่ใน QR Code
-        const SECRET_QR_CODE = "STAMP_ME_2026"; 
+        const SECRET_QR_CODE = "STAMP_ME_2026"; // รหัสลับใน QR Code สำหรับแจกแต้ม
         
-        let currentStamps = parseInt(localStorage.getItem('myRewardStamps')) || 0;
+        let currentCode = ""; // เก็บชื่อรหัส 10 หลักที่ล็อกอินอยู่ปัจจุบัน
+        let currentStamps = 0;
         let html5QrCode;
 
+        // ฟังก์ชันล็อกอิน
+        function login() {
+            const inputCode = document.getElementById('userCode').value;
+            
+            // ตรวจสอบว่ากรอกครบ 10 หลักหรือไม่
+            if (inputCode.length !== 10) {
+                alert("❌ กรุณากรอกรหัสให้ครบ 10 หลักครับ");
+                return;
+            }
+            
+            currentCode = inputCode;
+            document.getElementById('displayUserCode').innerText = `รหัสสมาชิก: ${currentCode}`;
+            
+            // ดึงข้อมูลแต้ม "เฉพาะของรหัสนี้" จาก localStorage
+            // โครงสร้างคีย์จะเป็น 'stamps_0123456789'
+            currentStamps = parseInt(localStorage.getItem('stamps_' + currentCode)) || 0;
+            
+            // สลับหน้าจอ
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('stampScreen').classList.remove('hidden');
+            
+            renderStamps();
+        }
+
+        // ฟังก์ชันล็อกเอาท์
+        function logout() {
+            stopScan();
+            currentCode = "";
+            currentStamps = 0;
+            document.getElementById('userCode').value = ""; // ล้างช่องกรอกรหัสเดิม
+            
+            // สลับหน้าจอกลับไปหน้าแรก
+            document.getElementById('stampScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        // วาดหน้าตาสแตมป์
         function renderStamps() {
             const grid = document.getElementById('stampGrid');
             grid.innerHTML = ''; 
@@ -130,7 +220,7 @@
             document.getElementById('statusText').innerText = `แต้มปัจจุบัน: ${currentStamps} / ${MAX_STAMPS}`;
         }
 
-        // --- ระบบสแกน QR Code ---
+        // เปิดกล้องสแกน
         function startScan() {
             if (currentStamps >= MAX_STAMPS) {
                 alert('คุณสะสมแต้มเต็มแล้ว! กรุณากดแลกรางวัลก่อนครับ');
@@ -143,26 +233,22 @@
 
             html5QrCode = new Html5Qrcode("reader");
             
-            // เปิดกล้องหลัง (environment)
             html5QrCode.start(
                 { facingMode: "environment" },
                 { fps: 10, qrbox: { width: 200, height: 200 } },
                 (decodedText) => {
-                    // เมื่อสแกนเจอข้อความ ให้ตรวจสอบว่าตรงกับรหัสลับไหม
                     if (decodedText === SECRET_QR_CODE) {
-                        stopScan(); // ปิดกล้อง
-                        addStamp(); // เพิ่มแต้ม
+                        stopScan();
+                        addStamp();
                         alert('รับแต้มสำเร็จ! 🎉');
                     } else {
                         stopScan();
-                        alert('❌ QR Code ไม่ถูกต้อง ไม่สามารถรับแต้มได้ครับ');
+                        alert('❌ QR Code ไม่ถูกต้องครับ');
                     }
                 },
-                (errorMessage) => {
-                    // ละเว้น error ระหว่างกล้องกำลังมองหา QR Code
-                }
+                (errorMessage) => { /* ปล่อยผ่านขณะกล้องหาโฟกัส */ }
             ).catch((err) => {
-                alert(`ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตให้ใช้งานกล้องครับ\n(${err})`);
+                alert(`ไม่สามารถเปิดกล้องได้: ${err}`);
                 stopScan();
             });
         }
@@ -177,31 +263,32 @@
             }
         }
 
+        // เพิ่มแต้มและบันทึกแยกตามรหัสย่อย
         function addStamp() {
             currentStamps++;
-            localStorage.setItem('myRewardStamps', currentStamps);
+            // บันทึกแต้มผูกกับรหัส 10 หลักปัจจุบัน
+            localStorage.setItem('stamps_' + currentCode, currentStamps);
             renderStamps();
             
             if (currentStamps === MAX_STAMPS) {
                 setTimeout(() => {
-                    alert('ยินดีด้วย! คุณสะสมแต้มครบ 10 แต้มแล้ว มารับของรางวัลได้เลยครับ!');
+                    alert(`ยินดีด้วย รหัส ${currentCode} สะสมครบ 10 แต้มแล้วครับ!`);
                 }, 500);
             }
         }
 
+        // แลกรางวัลเฉพาะรหัสนี้
         function redeemReward() {
             if (currentStamps === 0) {
                 alert('คุณยังไม่มีแต้มให้แลกรางวัลครับ');
                 return;
             }
-            if (confirm('ต้องการแลกของรางวัลและรีเซ็ตแต้มเป็น 0 ใช่หรือไม่?')) {
+            if (confirm(`ต้องการแลกของรางวัลและรีเซ็ตแต้มของรหัส ${currentCode} เป็น 0 ใช่หรือไม่?`)) {
                 currentStamps = 0;
-                localStorage.setItem('myRewardStamps', currentStamps);
+                localStorage.setItem('stamps_' + currentCode, currentStamps);
                 renderStamps();
             }
         }
-
-        renderStamps();
     </script>
 </body>
 </html>
