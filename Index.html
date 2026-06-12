@@ -13,50 +13,63 @@
             padding: 0;
             height: 100%;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #111; /* เปลี่ยนพื้นหลังตอนโหลดเป็นสีดำ */
         }
         #map {
             width: 100%;
             height: 100%;
-            z-index: 1; /* ป้องกันแผนที่บัง UI */
+            z-index: 1;
         }
+        /* ปรับ UI ให้เข้ากับธีมเกมดาร์กโหมด */
         #ui-panel {
             position: absolute;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            background: white;
+            background: rgba(30, 40, 50, 0.95);
             padding: 15px 25px;
-            border-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 200, 0.2);
             text-align: center;
-            z-index: 1000; /* ให้อยู่เหนือแผนที่ */
-            min-width: 250px;
+            z-index: 1000;
+            min-width: 260px;
+            border: 1px solid #00ffcc;
         }
         .distance-text {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
-            color: #2c3e50;
+            color: #00ffcc; /* สีเขียวเรืองแสงแบบ Sci-fi */
+            text-shadow: 0 0 10px rgba(0, 255, 200, 0.5);
         }
         .target-text {
             font-size: 14px;
-            color: #7f8c8d;
+            color: #a0b0c0;
             margin-top: 5px;
         }
         #start-btn {
-            background-color: #27ae60;
-            color: white;
+            background-color: #00ffcc;
+            color: #111;
             border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
+            padding: 12px 20px;
+            border-radius: 15px;
             font-size: 16px;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 15px;
             width: 100%;
             font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        #start-btn:active {
+            transform: scale(0.95);
         }
         #start-btn:disabled {
-            background-color: #bdc3c7;
+            background-color: #34495e;
+            color: #7f8c8d;
             cursor: not-allowed;
+            border: 1px solid #2c3e50;
+            box-shadow: none;
         }
     </style>
 </head>
@@ -65,9 +78,9 @@
     <div id="map"></div>
 
     <div id="ui-panel">
-        <div class="distance-text"><span id="current-distance">0.00</span> / 300 m</div>
-        <div class="target-text">ภารกิจ: เดินให้ครบ 300 เมตร</div>
-        <button id="start-btn" onclick="startTracking()">เริ่มออกเดินทาง</button>
+        <div class="distance-text"><span id="current-distance">0.00</span> / 300m</div>
+        <div class="target-text">MISSION: Explore the area</div>
+        <button id="start-btn" onclick="startTracking()">START MISSION</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -80,22 +93,46 @@
         let lastPosition = null;
         let userMarker = null;
 
-        // ฟังก์ชันเริ่มต้นสร้างแผนที่ OpenStreetMap
         function initMap() {
-            // ตั้งค่าเริ่มต้นที่กรุงเทพฯ
-            map = L.map('map').setView([13.7563, 100.5018], 18);
+            // สร้างแผนที่เปล่าๆ ไว้ก่อน (จะเลื่อนไปหาผู้ใช้เองเมื่อดึงพิกัดสำเร็จ)
+            map = L.map('map');
 
-            // โหลดแผนที่จาก OpenStreetMap
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '© OpenStreetMap'
+            // ใช้ Tile Layer โทนดาร์กโหมด (CartoDB Dark Matter) ให้ความรู้สึกเหมือนแผนที่ในเกม
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 20,
+                attribution: '© OpenStreetMap & © CARTO'
             }).addTo(map);
 
-            // สร้างเส้นทาง (Polyline)
-            polyline = L.polyline(pathCoordinates, {color: '#3498db', weight: 5}).addTo(map);
+            // วาดเส้นทางเป็นสีเขียวสะท้อนแสงให้เข้ากับธีม
+            polyline = L.polyline(pathCoordinates, {
+                color: '#00ffcc', 
+                weight: 6,
+                opacity: 0.8,
+                dashArray: '10, 10' // ทำให้เส้นเป็นรอยปะเหมือนทางเดิน
+            }).addTo(map);
+
+            // สั่งให้แผนที่ขอพิกัดปัจจุบันเพื่อซูมไปหาผู้ใช้ทันทีที่โหลดเว็บเสร็จ
+            map.locate({setView: true, maxZoom: 18});
+
+            // กรณีดึงพิกัดเริ่มต้นสำเร็จ ให้ปักหมุดไว้ก่อน
+            map.on('locationfound', function(e) {
+                if (!userMarker) {
+                    createUserMarker(e.latlng);
+                }
+            });
         }
 
-        // เรียกใช้งานแผนที่ทันที
+        function createUserMarker(latlng) {
+            userMarker = L.circleMarker(latlng, {
+                radius: 10,
+                fillColor: "#00ffcc",
+                color: "#ffffff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+        }
+
         initMap();
 
         function startTracking() {
@@ -104,8 +141,14 @@
                 return;
             }
 
-            document.getElementById("start-btn").innerText = "กำลังติดตามพิกัด...";
+            document.getElementById("start-btn").innerText = "TRACKING...";
             document.getElementById("start-btn").disabled = true;
+
+            // รีเซ็ตค่าระยะทางเผื่อมีการเริ่มใหม่
+            totalDistance = 0;
+            lastPosition = null;
+            pathCoordinates = [];
+            polyline.setLatLngs(pathCoordinates);
 
             watchId = navigator.geolocation.watchPosition(
                 updatePosition, 
@@ -119,19 +162,10 @@
             const currentLng = position.coords.longitude;
             const currentLoc = [currentLat, currentLng];
 
-            // เลื่อนกล้องแผนที่ตามผู้ใช้
             map.setView(currentLoc, 18);
 
-            // อัปเดต Marker ผู้เล่น
             if (!userMarker) {
-                userMarker = L.circleMarker(currentLoc, {
-                    radius: 8,
-                    fillColor: "#e74c3c",
-                    color: "#ffffff",
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 1
-                }).addTo(map);
+                createUserMarker(currentLoc);
             } else {
                 userMarker.setLatLng(currentLoc);
             }
@@ -142,8 +176,8 @@
                     currentLat, currentLng
                 );
                 
-                // กรองค่า GPS ที่กระโดดเกินไป
-                if (distanceAdded > 0.5) {
+                // กรองค่า GPS (เริ่มนับเมื่อมีการขยับเกิน 1 เมตร เพื่อลดปัญหา GPS แกว่งตอนยืนเฉยๆ)
+                if (distanceAdded > 1) {
                     totalDistance += distanceAdded;
                     document.getElementById("current-distance").innerText = totalDistance.toFixed(2);
                     
@@ -151,6 +185,7 @@
                     polyline.setLatLngs(pathCoordinates);
                 }
             } else {
+                // จุดเริ่มต้นของการแทร็ก
                 pathCoordinates.push(currentLoc);
                 polyline.setLatLngs(pathCoordinates);
             }
@@ -159,9 +194,10 @@
 
             if (totalDistance >= 300) {
                 navigator.geolocation.clearWatch(watchId);
-                document.getElementById("start-btn").innerText = "ภารกิจสำเร็จ! 🎉";
+                document.getElementById("start-btn").innerText = "MISSION COMPLETED! 🎉";
                 document.getElementById("start-btn").style.backgroundColor = "#f39c12";
-                alert("ยินดีด้วย! คุณเดินสำรวจครบ 300 เมตรแล้ว");
+                document.getElementById("start-btn").style.color = "#fff";
+                alert("ยินดีด้วย! ภารกิจเดินสำรวจ 300 เมตรสำเร็จแล้ว");
             }
         }
 
