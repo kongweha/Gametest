@@ -110,6 +110,11 @@
             margin-bottom: 10px;
             transition: 0.2s;
         }
+        button:disabled {
+            background-color: #cbd5e1 !important;
+            color: #94a3b8 !important;
+            cursor: not-allowed;
+        }
         .btn-primary { background-color: #3b82f6; color: white; }
         .btn-primary:hover { background-color: #2563eb; }
         .btn-cancel { background-color: #64748b; color: white; display: none; }
@@ -124,7 +129,7 @@
             overflow: hidden;
         }
 
-        /* ซ่อนหน้าเว็บส่วนที่ยังไม่ได้ล็อกอิน */
+        .loading { font-style: italic; color: #3b82f6; display: none; margin-top: 10px; font-weight: bold;}
         .hidden { display: none !important; }
     </style>
 </head>
@@ -139,7 +144,8 @@
             <input type="tel" id="userCode" maxlength="10" placeholder="0123456789" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
         </div>
         
-        <button class="container-btn btn-primary" onclick="login()">ตกลงเพื่อเข้าสู่ระบบ</button>
+        <button id="btnLogin" class="btn-primary" onclick="login()">ตกลงเพื่อเข้าสู่ระบบ</button>
+        <div id="loadingLogin" class="loading">⏳ กำลังตรวจสอบรหัสจากฐานข้อมูล...</div>
     </div>
 
     <div class="container hidden" id="stampScreen">
@@ -153,56 +159,74 @@
 
         <button id="btnScan" class="btn-primary" onclick="startScan()">📷 เปิดกล้องสแกนรับแต้ม</button>
         <button id="btnCancel" class="btn-cancel" onclick="stopScan()">❌ ยกเลิกการสแกน</button>
+        <div id="loadingAction" class="loading">⏳ กำลังอัปเดตข้อมูลลงฐานข้อมูล Google Sheets...</div>
         
-        <button class="btn-redeem" onclick="redeemReward()">🎁 แลกของรางวัล (รีเซ็ตแต้มรหัสนี้)</button>
+        <button id="btnRedeem" class="btn-redeem" onclick="redeemReward()">🎁 แลกของรางวัล (รีเซ็ตแต้มรหัสนี้)</button>
         <button class="btn-logout" onclick="logout()">Logout ออกจากระบบ</button>
     </div>
 
     <script>
+        // ลิงก์ API Google Apps Script ของคุณ
+        const API_URL = "https://script.google.com/macros/s/AKfycbxpt48SWOSpXcKlliR_ihZiE09OX_3Ifw03Cs48UC8Am3qBfDPa8O3ADMSbgOuiUPodag/exec";
         const MAX_STAMPS = 10;
-        const SECRET_QR_CODE = "STAMP_ME_2026"; // รหัสลับใน QR Code สำหรับแจกแต้ม
+        const SECRET_QR_CODE = "STAMP_ME_2026"; 
         
-        let currentCode = ""; // เก็บชื่อรหัส 10 หลักที่ล็อกอินอยู่ปัจจุบัน
+        let currentCode = ""; 
         let currentStamps = 0;
         let html5QrCode;
 
-        // ฟังก์ชันล็อกอิน
+        // 1. ฟังก์ชันเข้าสู่ระบบ (เรียกดึงข้อมูลจาก API)
         function login() {
             const inputCode = document.getElementById('userCode').value;
             
-            // ตรวจสอบว่ากรอกครบ 10 หลักหรือไม่
             if (inputCode.length !== 10) {
                 alert("❌ กรุณากรอกรหัสให้ครบ 10 หลักครับ");
                 return;
             }
             
-            currentCode = inputCode;
-            document.getElementById('displayUserCode').innerText = `รหัสสมาชิก: ${currentCode}`;
-            
-            // ดึงข้อมูลแต้ม "เฉพาะของรหัสนี้" จาก localStorage
-            // โครงสร้างคีย์จะเป็น 'stamps_0123456789'
-            currentStamps = parseInt(localStorage.getItem('stamps_' + currentCode)) || 0;
-            
-            // สลับหน้าจอ
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('stampScreen').classList.remove('hidden');
-            
-            renderStamps();
+            // แสดงสถานะ Loading และล็อกปุ่ม
+            document.getElementById('loadingLogin').style.display = 'block';
+            document.getElementById('btnLogin').disabled = true;
+
+            // ส่งข้อมูลไปยัง API หลังบ้าน
+            fetch(`${API_URL}?action=checkLogin&userCode=${inputCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loadingLogin').style.display = 'none';
+                    document.getElementById('btnLogin').disabled = false;
+
+                    if (data.success) {
+                        currentCode = inputCode;
+                        currentStamps = data.stamps;
+                        
+                        document.getElementById('displayUserCode').innerText = `รหัสสมาชิก: ${currentCode}`;
+                        document.getElementById('loginScreen').classList.add('hidden');
+                        document.getElementById('stampScreen').classList.remove('hidden');
+                        
+                        renderStamps();
+                    } else {
+                        alert(data.message || "ไม่พบข้อมูลรหัสนี้ในระบบ");
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('loadingLogin').style.display = 'none';
+                    document.getElementById('btnLogin').disabled = false;
+                    alert("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล กรุณาลองใหม่ภายหลัง");
+                    console.error("Error:", error);
+                });
         }
 
-        // ฟังก์ชันล็อกเอาท์
+        // 2. ฟังก์ชันล็อกเอาท์
         function logout() {
             stopScan();
             currentCode = "";
             currentStamps = 0;
-            document.getElementById('userCode').value = ""; // ล้างช่องกรอกรหัสเดิม
-            
-            // สลับหน้าจอกลับไปหน้าแรก
+            document.getElementById('userCode').value = ""; 
             document.getElementById('stampScreen').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
         }
 
-        // วาดหน้าตาสแตมป์
+        // 3. ฟังก์ชันเรนเดอร์ตารางสแตมป์
         function renderStamps() {
             const grid = document.getElementById('stampGrid');
             grid.innerHTML = ''; 
@@ -220,7 +244,7 @@
             document.getElementById('statusText').innerText = `แต้มปัจจุบัน: ${currentStamps} / ${MAX_STAMPS}`;
         }
 
-        // เปิดกล้องสแกน
+        // 4. ฟังก์ชันเปิดกล้องสแกนคิวอาร์
         function startScan() {
             if (currentStamps >= MAX_STAMPS) {
                 alert('คุณสะสมแต้มเต็มแล้ว! กรุณากดแลกรางวัลก่อนครับ');
@@ -239,14 +263,13 @@
                 (decodedText) => {
                     if (decodedText === SECRET_QR_CODE) {
                         stopScan();
-                        addStamp();
-                        alert('รับแต้มสำเร็จ! 🎉');
+                        addStamp(); // เรียกใช้ฟังก์ชันบันทึกแต้ม
                     } else {
                         stopScan();
                         alert('❌ QR Code ไม่ถูกต้องครับ');
                     }
                 },
-                (errorMessage) => { /* ปล่อยผ่านขณะกล้องหาโฟกัส */ }
+                (errorMessage) => { }
             ).catch((err) => {
                 alert(`ไม่สามารถเปิดกล้องได้: ${err}`);
                 stopScan();
@@ -263,30 +286,73 @@
             }
         }
 
-        // เพิ่มแต้มและบันทึกแยกตามรหัสย่อย
+        // 5. ฟังก์ชันเพิ่มแต้มส่งไปบันทึกบน Google Sheet
         function addStamp() {
-            currentStamps++;
-            // บันทึกแต้มผูกกับรหัส 10 หลักปัจจุบัน
-            localStorage.setItem('stamps_' + currentCode, currentStamps);
-            renderStamps();
-            
-            if (currentStamps === MAX_STAMPS) {
-                setTimeout(() => {
-                    alert(`ยินดีด้วย รหัส ${currentCode} สะสมครบ 10 แต้มแล้วครับ!`);
-                }, 500);
-            }
+            document.getElementById('loadingAction').style.display = 'block';
+            document.getElementById('btnScan').disabled = true;
+            document.getElementById('btnRedeem').disabled = true;
+
+            fetch(`${API_URL}?action=addStamp&userCode=${currentCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loadingAction').style.display = 'none';
+                    document.getElementById('btnScan').disabled = false;
+                    document.getElementById('btnRedeem').disabled = false;
+
+                    if(data.success) {
+                        currentStamps = data.stamps;
+                        renderStamps();
+                        alert('รับแต้มสำเร็จและบันทึกลง Google Sheets แล้ว! 🎉');
+                        
+                        if (currentStamps === MAX_STAMPS) {
+                            setTimeout(() => {
+                                alert(`ยินดีด้วย รหัส ${currentCode} สะสมครบ 10 แต้มแล้วครับ!`);
+                            }, 300);
+                        }
+                    } else {
+                        alert(data.message || "เกิดข้อผิดพลาดในการบันทึกแต้ม");
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('loadingAction').style.display = 'none';
+                    document.getElementById('btnScan').disabled = false;
+                    document.getElementById('btnRedeem').disabled = false;
+                    alert("เชื่อมต่อฐานข้อมูลล้มเหลว แต้มยังไม่ถูกบันทึก");
+                });
         }
 
-        // แลกรางวัลเฉพาะรหัสนี้
+        // 6. ฟังก์ชันแลกของรางวัลและรีเซ็ตค่าเป็น 0 บน Google Sheet
         function redeemReward() {
             if (currentStamps === 0) {
                 alert('คุณยังไม่มีแต้มให้แลกรางวัลครับ');
                 return;
             }
             if (confirm(`ต้องการแลกของรางวัลและรีเซ็ตแต้มของรหัส ${currentCode} เป็น 0 ใช่หรือไม่?`)) {
-                currentStamps = 0;
-                localStorage.setItem('stamps_' + currentCode, currentStamps);
-                renderStamps();
+                document.getElementById('loadingAction').style.display = 'block';
+                document.getElementById('btnScan').disabled = true;
+                document.getElementById('btnRedeem').disabled = true;
+
+                fetch(`${API_URL}?action=redeemReward&userCode=${currentCode}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('loadingAction').style.display = 'none';
+                        document.getElementById('btnScan').disabled = false;
+                        document.getElementById('btnRedeem').disabled = false;
+
+                        if(data.success) {
+                            currentStamps = 0;
+                            renderStamps();
+                            alert('รีเซ็ตแต้มในระบบ Google Sheets สำเร็จ!');
+                        } else {
+                            alert("เกิดข้อผิดพลาดในการรีเซ็ตแต้ม");
+                        }
+                    })
+                    .catch(error => {
+                        document.getElementById('loadingAction').style.display = 'none';
+                        document.getElementById('btnScan').disabled = false;
+                        document.getElementById('btnRedeem').disabled = false;
+                        alert("เชื่อมต่อฐานข้อมูลล้มเหลว ไม่สามารถรีเซ็ตแต้มได้");
+                    });
             }
         }
     </script>
