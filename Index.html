@@ -3,277 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบสะสมแต้มด้วยรหัส 10 หลัก</title>
+    <title>ระบบสะสมแต้ม Event</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-        }
-        h2 { color: #333; margin-top: 0; }
-        p { color: #666; font-size: 14px; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
+        .input-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 18px; box-sizing: border-box; text-align: center; letter-spacing: 2px; margin-bottom: 15px;}
         
-        /* สไตล์ของฟอร์มกรอกรหัส (Login) */
-        .input-group {
-            margin: 20px 0;
-            text-align: left;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #475569;
-        }
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #cbd5e1;
-            border-radius: 10px;
-            font-size: 18px;
-            box-sizing: border-box;
-            letter-spacing: 2px;
-            text-align: center;
-        }
-        .input-group input:focus {
-            border-color: #3b82f6;
-            outline: none;
-        }
-
-        /* ตารางสแตมป์ */
-        .stamp-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            margin: 25px 0;
-        }
-        .stamp-slot {
-            aspect-ratio: 1 / 1;
-            border-radius: 50%;
-            border: 2px dashed #cbd5e1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            color: #cbd5e1;
-            transition: all 0.3s ease;
-        }
-        .stamp-slot.active {
-            background-color: #10b981;
-            border-color: #10b981;
-            color: white;
-            font-size: 20px;
-            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
-            transform: scale(1.05);
-        }
-        .status-text {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .user-info {
-            background-color: #e2e8f0;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            color: #475569;
-            display: inline-block;
-            margin-bottom: 15px;
-        }
+        .stamp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 25px 0; }
+        .stamp-slot { aspect-ratio: 1 / 1; border-radius: 15px; border: 2px dashed #cbd5e1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: #94a3b8; transition: all 0.2s; background: #f8fafc;}
         
-        /* ปุ่มต่างๆ */
-        button {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            width: 100%;
-            margin-bottom: 10px;
-            transition: 0.2s;
-        }
-        button:disabled {
-            background-color: #cbd5e1 !important;
-            color: #94a3b8 !important;
-            cursor: not-allowed;
-        }
+        /* สไตล์เวลาเก็บฐานสำเร็จ */
+        .stamp-slot.active { background-color: #10b981; border-color: #10b981; color: white; transform: scale(1.05); box-shadow: 0 4px 6px rgba(16,185,129,0.3); font-weight: bold;}
+        .stamp-icon { font-size: 20px; margin-bottom: 2px; }
+        
+        button { padding: 12px 20px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-bottom: 10px; transition: 0.2s; }
         .btn-primary { background-color: #3b82f6; color: white; }
-        .btn-primary:hover { background-color: #2563eb; }
-        .btn-cancel { background-color: #64748b; color: white; display: none; }
         .btn-redeem { background-color: #ef4444; color: white; margin-top: 15px;}
+        .btn-redeem:disabled { background-color: #fca5a5; cursor: not-allowed; }
+        .btn-lucky { background-color: #8b5cf6; color: white; margin-top: 15px; animation: pulse 2s infinite;}
+        .btn-cancel { background-color: #64748b; color: white; display: none; }
         .btn-logout { background-color: #94a3b8; color: white; margin-top: 10px; font-size: 14px; padding: 8px;}
-
-        #reader {
-            width: 100%;
-            margin-bottom: 15px;
-            display: none;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .loading { font-style: italic; color: #3b82f6; display: none; margin-top: 10px; font-weight: bold;}
+        
+        #reader { width: 100%; margin-bottom: 15px; display: none; border-radius: 10px; overflow: hidden; }
         .hidden { display: none !important; }
+        .user-info { background-color: #e2e8f0; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #475569; display: inline-block; margin-bottom: 10px; }
+        .loading { font-style: italic; color: #3b82f6; display: none; margin-top: 10px; font-weight: bold; font-size: 14px;}
+        
+        /* หน้าจอแสดงผลตอนแลกรางวัลแล้ว */
+        .success-banner { background-color: #fef3c7; border: 2px solid #f59e0b; color: #d97706; padding: 20px; border-radius: 15px; margin: 20px 0; font-size: 18px; font-weight: bold;}
+        
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
 
     <div class="container" id="loginScreen">
         <h2>🔐 เข้าสู่ระบบสะสมแต้ม</h2>
-        <p>กรุณากรอกรหัสสมาชิก 10 หลักของคุณเพื่อดำเนินการต่อ</p>
-        
         <div class="input-group">
-            <label for="userCode">รหัสสมาชิก (10 หลัก):</label>
-            <input type="tel" id="userCode" maxlength="10" placeholder="0123456789" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            <input type="tel" id="userCode" maxlength="10" placeholder="กรอกรหัส 10 หลัก" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
         </div>
-        
         <button id="btnLogin" class="btn-primary" onclick="login()">ตกลงเพื่อเข้าสู่ระบบ</button>
-        <div id="loadingLogin" class="loading">⏳ กำลังตรวจสอบรหัสจากฐานข้อมูล...</div>
+        <div id="loadingLogin" class="loading">⏳ กำลังดึงข้อมูล...</div>
     </div>
 
     <div class="container hidden" id="stampScreen">
-        <h2>🎉 บัตรสะสมแต้มของคุณ</h2>
+        <h2>🎉 บัตรสะสมแต้ม</h2>
         <div class="user-info" id="displayUserCode">รหัสสมาชิก: XXXXXXXXXX</div>
         
-        <div class="stamp-grid" id="stampGrid"></div>
-        <div class="status-text" id="statusText">แต้มปัจจุบัน: 0 / 10</div>
-        
-        <div id="reader"></div>
+        <div id="successBanner" class="success-banner hidden">
+            🎁 รับของรางวัลเรียบร้อยแล้ว!<br><span style="font-size: 14px; color:#92400e;">(ไม่สามารถเล่นซ้ำได้)</span>
+        </div>
 
-        <button id="btnScan" class="btn-primary" onclick="startScan()">📷 เปิดกล้องสแกนรับแต้ม</button>
-        <button id="btnCancel" class="btn-cancel" onclick="stopScan()">❌ ยกเลิกการสแกน</button>
-        <div id="loadingAction" class="loading">⏳ กำลังอัปเดตข้อมูลลงฐานข้อมูล Google Sheets...</div>
+        <div id="stampArea">
+            <div class="stamp-grid" id="stampGrid"></div>
+            <div id="statusText" style="font-weight: bold; margin-bottom: 15px;">แต้มปัจจุบัน: 0 / 10</div>
+            
+            <div id="reader"></div>
+            <button id="btnScan" class="btn-primary" onclick="startScan()">📷 สแกน QR Code ฐาน</button>
+            <button id="btnCancel" class="btn-cancel" onclick="stopScan()">❌ ยกเลิก</button>
+            <div id="loadingAction" class="loading">⏳ กำลังบันทึกข้อมูลหลังบ้าน...</div>
+            
+            <button id="btnRedeem" class="btn-redeem" onclick="redeemReward()" disabled>🎁 แลกของรางวัล (ต้องครบ 10 ฐาน)</button>
+        </div>
         
-        <button id="btnRedeem" class="btn-redeem" onclick="redeemReward()">🎁 แลกของรางวัล (รีเซ็ตแต้มรหัสนี้)</button>
-        <button class="btn-logout" onclick="logout()">Logout ออกจากระบบ</button>
+        <button id="btnLucky" class="btn-lucky hidden" onclick="alert('ฟีเจอร์สแกนลุ้นโชคกำลังมาเร็วๆ นี้!')">🔮 สแกนเพื่อลุ้นของรางวัล</button>
+        
+        <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
     </div>
 
     <script>
-        // ลิงก์ API Google Apps Script ของคุณ
+        // 🎯 1. ใส่ลิงก์ API ของคุณตรงนี้
         const API_URL = "https://script.google.com/macros/s/AKfycbxpt48SWOSpXcKlliR_ihZiE09OX_3Ifw03Cs48UC8Am3qBfDPa8O3ADMSbgOuiUPodag/exec";
-        const MAX_STAMPS = 10;
-        const SECRET_QR_CODE = "STAMP_ME_2026"; 
         
-        let currentCode = ""; 
-        let currentStamps = 0;
+        // 🎯 2. ตั้งค่าชื่อฐานและคิวอาร์โค้ดของแต่ละฐาน (ปรับเปลี่ยน QR Code และชื่อได้ตามต้องการ)
+        const STATIONS = [
+            { id: 0, name: "ฐาน 1", qr: "QR_STN_01" },
+            { id: 1, name: "ฐาน 2", qr: "QR_STN_02" },
+            { id: 2, name: "ฐาน 3", qr: "QR_STN_03" },
+            { id: 3, name: "ฐาน 4", qr: "QR_STN_04" },
+            { id: 4, name: "ฐาน 5", qr: "QR_STN_05" },
+            { id: 5, name: "AIX",    qr: "QR_STN_06" }, // ฐานที่ 6 ชื่อ AIX
+            { id: 6, name: "ฐาน 7", qr: "QR_STN_07" },
+            { id: 7, name: "ฐาน 8", qr: "QR_STN_08" },
+            { id: 8, name: "ฐาน 9", qr: "QR_STN_09" },
+            { id: 9, name: "ฐาน 10", qr: "QR_STN_10" }
+        ];
+
+        let currentUser = { code: "", stations: Array(10).fill(false), isRedeemed: false };
         let html5QrCode;
 
-        // 1. ฟังก์ชันเข้าสู่ระบบ (เรียกดึงข้อมูลจาก API)
         function login() {
-            const inputCode = document.getElementById('userCode').value;
+            const input = document.getElementById('userCode').value;
+            if (input.length !== 10) { alert("กรุณากรอกรหัสให้ครบ 10 หลัก"); return; }
             
-            if (inputCode.length !== 10) {
-                alert("❌ กรุณากรอกรหัสให้ครบ 10 หลักครับ");
-                return;
-            }
-            
-            // แสดงสถานะ Loading และล็อกปุ่ม
             document.getElementById('loadingLogin').style.display = 'block';
             document.getElementById('btnLogin').disabled = true;
 
-            // ส่งข้อมูลไปยัง API หลังบ้าน
-            fetch(`${API_URL}?action=checkLogin&userCode=${inputCode}`)
-                .then(response => response.json())
+            fetch(`${API_URL}?action=checkLogin&userCode=${input}`)
+                .then(res => res.json())
                 .then(data => {
                     document.getElementById('loadingLogin').style.display = 'none';
                     document.getElementById('btnLogin').disabled = false;
-
+                    
                     if (data.success) {
-                        currentCode = inputCode;
-                        currentStamps = data.stamps;
+                        currentUser.code = input;
+                        currentUser.stations = data.stations;
+                        currentUser.isRedeemed = data.isRedeemed;
                         
-                        document.getElementById('displayUserCode').innerText = `รหัสสมาชิก: ${currentCode}`;
+                        document.getElementById('displayUserCode').innerText = `รหัสสมาชิก: ${currentUser.code}`;
                         document.getElementById('loginScreen').classList.add('hidden');
                         document.getElementById('stampScreen').classList.remove('hidden');
-                        
-                        renderStamps();
+                        renderUI();
                     } else {
-                        alert(data.message || "ไม่พบข้อมูลรหัสนี้ในระบบ");
+                        alert(data.message);
                     }
-                })
-                .catch(error => {
-                    document.getElementById('loadingLogin').style.display = 'none';
-                    document.getElementById('btnLogin').disabled = false;
-                    alert("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล กรุณาลองใหม่ภายหลัง");
-                    console.error("Error:", error);
-                });
+                }).catch(err => { alert("เกิดข้อผิดพลาดเครือข่าย"); location.reload(); });
         }
 
-        // 2. ฟังก์ชันล็อกเอาท์
-        function logout() {
-            stopScan();
-            currentCode = "";
-            currentStamps = 0;
-            document.getElementById('userCode').value = ""; 
-            document.getElementById('stampScreen').classList.add('hidden');
-            document.getElementById('loginScreen').classList.remove('hidden');
-        }
-
-        // 3. ฟังก์ชันเรนเดอร์ตารางสแตมป์
-        function renderStamps() {
-            const grid = document.getElementById('stampGrid');
-            grid.innerHTML = ''; 
-            for (let i = 1; i <= MAX_STAMPS; i++) {
-                const slot = document.createElement('div');
-                if (i <= currentStamps) {
-                    slot.className = 'stamp-slot active';
-                    slot.innerHTML = '⭐';
-                } else {
-                    slot.className = 'stamp-slot';
-                    slot.innerHTML = i;
-                }
-                grid.appendChild(slot);
-            }
-            document.getElementById('statusText').innerText = `แต้มปัจจุบัน: ${currentStamps} / ${MAX_STAMPS}`;
-        }
-
-        // 4. ฟังก์ชันเปิดกล้องสแกนคิวอาร์
-        function startScan() {
-            if (currentStamps >= MAX_STAMPS) {
-                alert('คุณสะสมแต้มเต็มแล้ว! กรุณากดแลกรางวัลก่อนครับ');
+        // ฟังก์ชันอัปเดตหน้าจอทั้งหมด (UI)
+        function renderUI() {
+            // กรณีแลกของรางวัลไปแล้ว (จบเกม)
+            if (currentUser.isRedeemed) {
+                document.getElementById('stampArea').classList.add('hidden');
+                document.getElementById('successBanner').classList.remove('hidden');
+                document.getElementById('btnLucky').classList.remove('hidden');
                 return;
             }
 
+            // กรณีเล่นอยู่: วาดตาราง 10 ฐาน
+            const grid = document.getElementById('stampGrid');
+            grid.innerHTML = ''; 
+            let count = 0;
+
+            STATIONS.forEach((st, index) => {
+                const slot = document.createElement('div');
+                const isPassed = currentUser.stations[index];
+                
+                if (isPassed) {
+                    count++;
+                    slot.className = 'stamp-slot active';
+                    slot.innerHTML = `<div class="stamp-icon">⭐</div><div>${st.name}</div>`;
+                } else {
+                    slot.className = 'stamp-slot';
+                    slot.innerHTML = `<div class="stamp-icon">⬜</div><div>${st.name}</div>`;
+                }
+                grid.appendChild(slot);
+            });
+
+            document.getElementById('statusText').innerText = count === 10 ? "🎉 เล่นครบ 10 ฐานแล้ว!" : `ผ่านแล้ว: ${count} / 10 ฐาน`;
+            
+            // ล็อกปุ่มแลกรางวัลถ้าไม่ครบ 10
+            document.getElementById('btnRedeem').disabled = (count < 10);
+            
+            // ซ่อนปุ่มสแกนถ้าครบแล้ว
+            document.getElementById('btnScan').style.display = (count === 10) ? 'none' : 'block';
+        }
+
+        function startScan() {
             document.getElementById('reader').style.display = 'block';
             document.getElementById('btnScan').style.display = 'none';
             document.getElementById('btnCancel').style.display = 'block';
 
             html5QrCode = new Html5Qrcode("reader");
-            
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 200, height: 200 } },
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 },
                 (decodedText) => {
-                    if (decodedText === SECRET_QR_CODE) {
-                        stopScan();
-                        addStamp(); // เรียกใช้ฟังก์ชันบันทึกแต้ม
-                    } else {
-                        stopScan();
-                        alert('❌ QR Code ไม่ถูกต้องครับ');
+                    // ตรวจสอบว่า QR Code ตรงกับฐานไหนใน 10 ฐาน
+                    const matchedStation = STATIONS.find(s => s.qr === decodedText);
+                    
+                    if (!matchedStation) {
+                        alert("❌ QR Code ไม่ถูกต้อง ไม่ใช่ของกิจกรรมนี้");
+                        stopScan(); return;
                     }
-                },
-                (errorMessage) => { }
-            ).catch((err) => {
-                alert(`ไม่สามารถเปิดกล้องได้: ${err}`);
-                stopScan();
-            });
+
+                    if (currentUser.stations[matchedStation.id]) {
+                        alert(`⚠️ คุณผ่าน ${matchedStation.name} ไปแล้วครับ!`);
+                        stopScan(); return;
+                    }
+
+                    stopScan();
+                    processStamp(matchedStation);
+                }, (err) => {}
+            ).catch(err => { alert("เปิดกล้องไม่ได้"); stopScan(); });
         }
 
         function stopScan() {
@@ -282,78 +193,52 @@
                     document.getElementById('reader').style.display = 'none';
                     document.getElementById('btnScan').style.display = 'block';
                     document.getElementById('btnCancel').style.display = 'none';
-                }).catch(err => console.log(err));
+                }).catch(e => {});
             }
         }
 
-        // 5. ฟังก์ชันเพิ่มแต้มส่งไปบันทึกบน Google Sheet
-        function addStamp() {
+        // ระบบ Optimistic UI (หน้าจอไว 1ms, บันทึกฉากหลัง)
+        function processStamp(station) {
+            // 1. หลอกตาผู้ใช้ (อัปเดตหน้าจอทันทีก่อนส่ง)
+            currentUser.stations[station.id] = true;
+            renderUI(); 
             document.getElementById('loadingAction').style.display = 'block';
-            document.getElementById('btnScan').disabled = true;
-            document.getElementById('btnRedeem').disabled = true;
 
-            fetch(`${API_URL}?action=addStamp&userCode=${currentCode}`)
-                .then(response => response.json())
+            // 2. ส่งข้อมูลบันทึกเงียบๆ
+            fetch(`${API_URL}?action=addStamp&userCode=${currentUser.code}&stationIndex=${station.id}`)
+                .then(res => res.json())
                 .then(data => {
                     document.getElementById('loadingAction').style.display = 'none';
-                    document.getElementById('btnScan').disabled = false;
-                    document.getElementById('btnRedeem').disabled = false;
-
-                    if(data.success) {
-                        currentStamps = data.stamps;
-                        renderStamps();
-                        alert('รับแต้มสำเร็จและบันทึกลง Google Sheets แล้ว! 🎉');
-                        
-                        if (currentStamps === MAX_STAMPS) {
-                            setTimeout(() => {
-                                alert(`ยินดีด้วย รหัส ${currentCode} สะสมครบ 10 แต้มแล้วครับ!`);
-                            }, 300);
-                        }
-                    } else {
-                        alert(data.message || "เกิดข้อผิดพลาดในการบันทึกแต้ม");
+                    if (!data.success) {
+                        alert("เกิดข้อผิดพลาดในการบันทึกหลังบ้าน");
+                        currentUser.stations[station.id] = false; // ยกเลิกหน้าจอถ้าพัง
+                        renderUI();
                     }
-                })
-                .catch(error => {
-                    document.getElementById('loadingAction').style.display = 'none';
-                    document.getElementById('btnScan').disabled = false;
-                    document.getElementById('btnRedeem').disabled = false;
-                    alert("เชื่อมต่อฐานข้อมูลล้มเหลว แต้มยังไม่ถูกบันทึก");
                 });
         }
 
-        // 6. ฟังก์ชันแลกของรางวัลและรีเซ็ตค่าเป็น 0 บน Google Sheet
         function redeemReward() {
-            if (currentStamps === 0) {
-                alert('คุณยังไม่มีแต้มให้แลกรางวัลครับ');
-                return;
-            }
-            if (confirm(`ต้องการแลกของรางวัลและรีเซ็ตแต้มของรหัส ${currentCode} เป็น 0 ใช่หรือไม่?`)) {
-                document.getElementById('loadingAction').style.display = 'block';
-                document.getElementById('btnScan').disabled = true;
+            if (confirm("ต้องการกดแลกของรางวัลใช่หรือไม่? (ไม่สามารถย้อนกลับได้)")) {
+                document.getElementById('btnRedeem').innerText = "กำลังดำเนินการ...";
                 document.getElementById('btnRedeem').disabled = true;
 
-                fetch(`${API_URL}?action=redeemReward&userCode=${currentCode}`)
-                    .then(response => response.json())
+                fetch(`${API_URL}?action=redeemReward&userCode=${currentUser.code}`)
+                    .then(res => res.json())
                     .then(data => {
-                        document.getElementById('loadingAction').style.display = 'none';
-                        document.getElementById('btnScan').disabled = false;
-                        document.getElementById('btnRedeem').disabled = false;
-
                         if(data.success) {
-                            currentStamps = 0;
-                            renderStamps();
-                            alert('รีเซ็ตแต้มในระบบ Google Sheets สำเร็จ!');
-                        } else {
-                            alert("เกิดข้อผิดพลาดในการรีเซ็ตแต้ม");
+                            currentUser.isRedeemed = true;
+                            renderUI(); // สลับหน้าจอเป็นรับรางวัลแล้ว
                         }
-                    })
-                    .catch(error => {
-                        document.getElementById('loadingAction').style.display = 'none';
-                        document.getElementById('btnScan').disabled = false;
-                        document.getElementById('btnRedeem').disabled = false;
-                        alert("เชื่อมต่อฐานข้อมูลล้มเหลว ไม่สามารถรีเซ็ตแต้มได้");
                     });
             }
+        }
+
+        function logout() {
+            stopScan();
+            currentUser = { code: "", stations: Array(10).fill(false), isRedeemed: false };
+            document.getElementById('userCode').value = "";
+            document.getElementById('stampScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
         }
     </script>
 </body>
