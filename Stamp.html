@@ -30,10 +30,10 @@
         }
         .input-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 18px; box-sizing: border-box; text-align: center; letter-spacing: 2px; margin-bottom: 15px;}
         
-        /* 🛠️ แก้ไข Grid ตรงนี้: ใช้ minmax(0, 1fr) เพื่อบังคับไม่ให้ทะลุกรอบเด็ดขาด */
+        /* 🛠️ เปลี่ยนการเรียงเป็นแถวละ 4 ช่อง เพื่อให้ 7 ฐานดูสมดุลขึ้น */
         .stamp-grid { 
             display: grid; 
-            grid-template-columns: repeat(5, minmax(0, 1fr)); 
+            grid-template-columns: repeat(4, minmax(0, 1fr)); 
             gap: 8px; 
             margin: 20px 0; 
             width: 100%;
@@ -53,12 +53,11 @@
             padding: 2px;
             box-sizing: border-box;
             text-align: center;
-            overflow: hidden; /* ตัดเนื้อหาที่ล้นขอบวงกลมทิ้ง */
+            overflow: hidden; 
         }
         
-        /* 🛠️ ปรับขนาดตัวหนังสือให้ยืดหยุ่น (Responsive Font) */
         .stamp-slot div {
-            font-size: clamp(9px, 2.5vw, 12px); /* ขนาดเล็กสุด 9px ใหญ่สุด 12px ปรับตามจอ */
+            font-size: clamp(9px, 2.5vw, 12px); 
             line-height: 1.1;
             word-break: break-word;
             padding: 0 2px;
@@ -73,7 +72,6 @@
             font-weight: bold;
         }
         
-        /* 🛠️ ปรับขนาดรูปภาพให้ยืดหยุ่น */
         .stamp-icon { 
             width: clamp(16px, 5vw, 28px); 
             height: clamp(16px, 5vw, 28px); 
@@ -102,13 +100,12 @@
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        /* 📱 จัดการหน้าจอมือถือเพิ่มเติม */
         @media (max-width: 480px) {
             .container { 
-                padding: 20px 10px; /* ลดขอบซ้ายขวากล่องขาว */
+                padding: 20px 10px; 
             }
             .stamp-grid {
-                gap: 5px; /* ลดช่องว่างระหว่างวงกลมลงอีกให้พอดีจอ */
+                gap: 5px; 
             }
         }
     </style>
@@ -135,14 +132,16 @@
 
         <div id="stampArea">
             <div class="stamp-grid" id="stampGrid"></div>
-            <div id="statusText" style="font-weight: bold; margin-bottom: 15px;">แต้มปัจจุบัน: 0 / 10</div>
+            <!-- แก้ไขข้อความเป้าหมายเป็น 7 ฐาน -->
+            <div id="statusText" style="font-weight: bold; margin-bottom: 15px;">แต้มปัจจุบัน: 0 / 7</div>
             
             <div id="reader"></div>
             <button id="btnScan" class="btn-primary" onclick="startScan()">📷 สแกน QR Code ฐาน</button>
             <button id="btnCancel" class="btn-cancel" onclick="stopScan()">❌ ยกเลิก</button>
             <div id="loadingAction" class="loading">⏳ กำลังบันทึกข้อมูลหลังบ้าน...</div>
             
-            <button id="btnRedeem" class="btn-redeem" onclick="redeemReward()" disabled>🎁 แลกของรางวัล (ต้องครบ 10 ฐาน)</button>
+            <!-- แก้ไขปุ่มเป็น 7 ฐาน -->
+            <button id="btnRedeem" class="btn-redeem" onclick="redeemReward()" disabled>🎁 แลกของรางวัล (ต้องครบ 7 ฐาน)</button>
         </div>
         
         <button id="btnLucky" class="btn-lucky hidden" onclick="alert('ฟีเจอร์สแกนลุ้นโชคกำลังมาเร็วๆ นี้!')">🔮 สแกนเพื่อลุ้นของรางวัล</button>
@@ -153,20 +152,19 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxpt48SWOSpXcKlliR_ihZiE09OX_3Ifw03Cs48UC8Am3qBfDPa8O3ADMSbgOuiUPodag/exec";
         
+        // 🎯 อัปเดตรายชื่อฐานเป็น 7 ฐานตามที่คุณระบุ
         const STATIONS = [
-            { id: 0, name: "ฐาน 1", qr: "QR_STN_01", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
-            { id: 1, name: "ฐาน 2", qr: "QR_STN_02", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
-            { id: 2, name: "ฐาน 3", qr: "QR_STN_03", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
-            { id: 3, name: "ฐาน 4", qr: "QR_STN_04", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
-            { id: 4, name: "ฐาน 5", qr: "QR_STN_05", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
-            { id: 5, name: "AIX",    qr: "QR_STN_06", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
-            { id: 6, name: "ฐาน 7", qr: "QR_STN_07", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
-            { id: 7, name: "ฐาน 8", qr: "QR_STN_08", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
-            { id: 8, name: "ฐาน 9", qr: "QR_STN_09", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
-            { id: 9, name: "ฐาน 10", qr: "QR_STN_10", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" }
+            { id: 0, name: "Library Playground", qr: "QR_STN_01", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 1, name: "Discovery Lab", qr: "QR_STN_02", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 2, name: "Play Zone", qr: "QR_STN_03", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 3, name: "Treasure Corner", qr: "QR_STN_04", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 4, name: "Media Studio", qr: "QR_STN_05", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 5, name: "Tech Station", qr: "QR_STN_06", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" }
         ];
 
-        let currentUser = { code: "", stations: Array(10).fill(false), isRedeemed: false };
+        // แก้ไขให้ค่าเริ่มต้น Array มี 7 ช่อง
+        let currentUser = { code: "", stations: Array(7).fill(false), isRedeemed: false };
         let html5QrCode;
         let syncInterval = null; 
 
@@ -269,10 +267,11 @@
                 grid.appendChild(slot);
             });
 
-            document.getElementById('statusText').innerText = count === 10 ? "🎉 เล่นครบ 10 ฐานแล้ว!" : `ผ่านแล้ว: ${count} / 10 ฐาน`;
+            // แก้ไขเป้าหมายให้เป็น 7 ฐาน
+            document.getElementById('statusText').innerText = count === 7 ? "🎉 เล่นครบ 7 ฐานแล้ว!" : `ผ่านแล้ว: ${count} / 7 ฐาน`;
             
-            document.getElementById('btnRedeem').disabled = (count < 10);
-            document.getElementById('btnScan').style.display = (count === 10) ? 'none' : 'block';
+            document.getElementById('btnRedeem').disabled = (count < 7);
+            document.getElementById('btnScan').style.display = (count === 7) ? 'none' : 'block';
         }
 
         function startScan() {
@@ -347,7 +346,8 @@
         function logout() {
             stopScan();
             stopRealTimeSync(); 
-            currentUser = { code: "", stations: Array(10).fill(false), isRedeemed: false };
+            // แก้ไขค่าเริ่มต้นตอนออกจากระบบให้เป็น 7 ช่อง
+            currentUser = { code: "", stations: Array(7).fill(false), isRedeemed: false };
             document.getElementById('userCode').value = "";
             document.getElementById('stampScreen').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
