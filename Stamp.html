@@ -68,6 +68,35 @@
         
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        /* 📱 ปรับการแสดงผลสำหรับหน้าจอมือถือ (หน้าจอเล็กกว่า 480px) */
+        @media (max-width: 480px) {
+            body { 
+                padding: 10px; 
+            }
+            .container { 
+                padding: 15px; 
+            }
+            .stamp-grid { 
+                gap: 5px; 
+                margin: 15px 0;
+            }
+            .stamp-slot {
+                padding: 2px; 
+            }
+            .stamp-slot div {
+                font-size: 10px !important; 
+                word-break: break-word; 
+                line-height: 1.1;
+            }
+            .stamp-icon {
+                width: 24px; 
+                height: 24px;
+            }
+            h2 {
+                font-size: 20px; 
+            }
+        }
     </style>
 </head>
 <body>
