@@ -213,7 +213,7 @@
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 },
                 (decodedText) => {
-                    const matchedStation = STATIONS.find(s => s.qr === decodedText);
+                    const matchedStation = STATIONS.find(s => decodedText.includes(s.qr));
                     
                     if (!matchedStation) {
                         alert("❌ QR Code ไม่ถูกต้อง ไม่ใช่ของกิจกรรมนี้");
