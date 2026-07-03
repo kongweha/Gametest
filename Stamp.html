@@ -30,7 +30,6 @@
         }
         .input-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 18px; box-sizing: border-box; text-align: center; letter-spacing: 2px; margin-bottom: 15px;}
         
-        /* 🛠️ เปลี่ยนการเรียงเป็นแถวละ 4 ช่อง เพื่อให้ 7 ฐานดูสมดุลขึ้น */
         .stamp-grid { 
             display: grid; 
             grid-template-columns: repeat(4, minmax(0, 1fr)); 
@@ -132,7 +131,6 @@
 
         <div id="stampArea">
             <div class="stamp-grid" id="stampGrid"></div>
-            <!-- แก้ไขข้อความเป้าหมายเป็น 7 ฐาน -->
             <div id="statusText" style="font-weight: bold; margin-bottom: 15px;">แต้มปัจจุบัน: 0 / 7</div>
             
             <div id="reader"></div>
@@ -140,7 +138,6 @@
             <button id="btnCancel" class="btn-cancel" onclick="stopScan()">❌ ยกเลิก</button>
             <div id="loadingAction" class="loading">⏳ กำลังบันทึกข้อมูลหลังบ้าน...</div>
             
-            <!-- แก้ไขปุ่มเป็น 7 ฐาน -->
             <button id="btnRedeem" class="btn-redeem" onclick="redeemReward()" disabled>🎁 แลกของรางวัล (ต้องครบ 7 ฐาน)</button>
         </div>
         
@@ -152,9 +149,9 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxpt48SWOSpXcKlliR_ihZiE09OX_3Ifw03Cs48UC8Am3qBfDPa8O3ADMSbgOuiUPodag/exec";
         
-        // 🎯 อัปเดตรายชื่อฐานเป็น 7 ฐานตามที่คุณระบุ
+        // 🎯 อัปเดตลิงก์รูปภาพด้วยรูปแบบ lh3.googleusercontent.com 
         const STATIONS = [
-            { id: 0, name: "Library Playground", qr: "QR_STN_01", imgActive: "https://drive.google.com/uc?export=view&id=1IPeKd6HQZ_-DLhHz1fF4mncM4lw7babh" },
+            { id: 0, name: "Library Playground", qr: "QR_STN_01", imgActive: "https://lh3.googleusercontent.com/d/1IPeKd6HQZ_-DLhHz1fF4mncM4lw7babh" },
             { id: 1, name: "Discovery Lab", qr: "QR_STN_02", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
             { id: 2, name: "Play Zone", qr: "QR_STN_03", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
             { id: 3, name: "Treasure Corner", qr: "QR_STN_04", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
@@ -163,7 +160,6 @@
             { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" }
         ];
 
-        // แก้ไขให้ค่าเริ่มต้น Array มี 7 ช่อง
         let currentUser = { code: "", stations: Array(7).fill(false), isRedeemed: false };
         let html5QrCode;
         let syncInterval = null; 
@@ -267,7 +263,6 @@
                 grid.appendChild(slot);
             });
 
-            // แก้ไขเป้าหมายให้เป็น 7 ฐาน
             document.getElementById('statusText').innerText = count === 7 ? "🎉 เล่นครบ 7 ฐานแล้ว!" : `ผ่านแล้ว: ${count} / 7 ฐาน`;
             
             document.getElementById('btnRedeem').disabled = (count < 7);
@@ -346,7 +341,6 @@
         function logout() {
             stopScan();
             stopRealTimeSync(); 
-            // แก้ไขค่าเริ่มต้นตอนออกจากระบบให้เป็น 7 ช่อง
             currentUser = { code: "", stations: Array(7).fill(false), isRedeemed: false };
             document.getElementById('userCode').value = "";
             document.getElementById('stampScreen').classList.add('hidden');
