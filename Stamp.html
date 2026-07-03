@@ -2,17 +2,43 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบสะสมแต้ม Event</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; position: relative;}
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            background-color: #f0f2f5; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding: 15px; 
+            box-sizing: border-box; 
+        }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
+            text-align: center; 
+            max-width: 400px; 
+            width: 100%; 
+            position: relative;
+            box-sizing: border-box;
+        }
         .input-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 18px; box-sizing: border-box; text-align: center; letter-spacing: 2px; margin-bottom: 15px;}
         
-        .stamp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 25px 0; }
+        /* 🛠️ แก้ไข Grid ตรงนี้: ใช้ minmax(0, 1fr) เพื่อบังคับไม่ให้ทะลุกรอบเด็ดขาด */
+        .stamp-grid { 
+            display: grid; 
+            grid-template-columns: repeat(5, minmax(0, 1fr)); 
+            gap: 8px; 
+            margin: 20px 0; 
+            width: 100%;
+        }
         
-        /* สไตล์กรอบวงกลม */
         .stamp-slot { 
             aspect-ratio: 1 / 1; 
             border-radius: 50%; 
@@ -24,12 +50,20 @@
             color: #94a3b8; 
             transition: all 0.2s; 
             background: #f8fafc;
-            padding: 5px;
+            padding: 2px;
             box-sizing: border-box;
             text-align: center;
+            overflow: hidden; /* ตัดเนื้อหาที่ล้นขอบวงกลมทิ้ง */
         }
         
-        /* สไตล์เวลาเก็บฐานสำเร็จ */
+        /* 🛠️ ปรับขนาดตัวหนังสือให้ยืดหยุ่น (Responsive Font) */
+        .stamp-slot div {
+            font-size: clamp(9px, 2.5vw, 12px); /* ขนาดเล็กสุด 9px ใหญ่สุด 12px ปรับตามจอ */
+            line-height: 1.1;
+            word-break: break-word;
+            padding: 0 2px;
+        }
+
         .stamp-slot.active { 
             background-color: #ecfdf5; 
             border-color: #10b981; 
@@ -39,16 +73,16 @@
             font-weight: bold;
         }
         
-        /* ปรับขนาดรูปภาพเมื่อผ่านฐาน */
+        /* 🛠️ ปรับขนาดรูปภาพให้ยืดหยุ่น */
         .stamp-icon { 
-            width: 30px; 
-            height: 30px; 
+            width: clamp(16px, 5vw, 28px); 
+            height: clamp(16px, 5vw, 28px); 
             margin-bottom: 2px; 
             object-fit: contain; 
-            border-radius: 5px;
+            border-radius: 4px;
         }
         
-        button { padding: 12px 20px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-bottom: 10px; transition: 0.2s; }
+        button { padding: 12px 20px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-bottom: 10px; transition: 0.2s; box-sizing: border-box;}
         .btn-primary { background-color: #3b82f6; color: white; }
         .btn-redeem { background-color: #ef4444; color: white; margin-top: 15px;}
         .btn-redeem:disabled { background-color: #fca5a5; cursor: not-allowed; }
@@ -61,7 +95,6 @@
         .user-info { background-color: #e2e8f0; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #475569; display: inline-block; margin-bottom: 10px; }
         .loading { font-style: italic; color: #3b82f6; display: none; margin-top: 10px; font-weight: bold; font-size: 14px;}
         
-        /* สัญลักษณ์บอกว่ากำลังเชื่อมต่อ Real-time */
         .sync-indicator { position: absolute; top: 15px; right: 15px; width: 10px; height: 10px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; animation: blink 1.5s infinite; display: none; }
         
         .success-banner { background-color: #fef3c7; border: 2px solid #f59e0b; color: #d97706; padding: 20px; border-radius: 15px; margin: 20px 0; font-size: 18px; font-weight: bold;}
@@ -69,35 +102,13 @@
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        /* 📱 ปรับการแสดงผลสำหรับหน้าจอมือถือ (ป้องกันวงกลมทะลุกรอบ) */
-        @media (max-width: 600px) {
-            body { 
-                padding: 5px; 
-            }
+        /* 📱 จัดการหน้าจอมือถือเพิ่มเติม */
+        @media (max-width: 480px) {
             .container { 
-                padding: 20px 5px; 
+                padding: 20px 10px; /* ลดขอบซ้ายขวากล่องขาว */
             }
-            .stamp-grid { 
-                gap: 3px; 
-                margin: 15px 0;
-            }
-            .stamp-slot {
-                padding: 2px; 
-                min-width: 0; 
-                overflow: hidden;
-            }
-            .stamp-slot div {
-                font-size: 9px !important; 
-                line-height: 1.1;
-                letter-spacing: -0.5px;
-                word-break: break-word; 
-            }
-            .stamp-icon {
-                width: 20px; 
-                height: 20px;
-            }
-            h2 {
-                font-size: 20px; 
+            .stamp-grid {
+                gap: 5px; /* ลดช่องว่างระหว่างวงกลมลงอีกให้พอดีจอ */
             }
         }
     </style>
@@ -142,7 +153,6 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxpt48SWOSpXcKlliR_ihZiE09OX_3Ifw03Cs48UC8Am3qBfDPa8O3ADMSbgOuiUPodag/exec";
         
-        // 🎯 ใส่ URL รูปภาพของคุณในช่อง imgActive สำหรับแต่ละฐาน
         const STATIONS = [
             { id: 0, name: "ฐาน 1", qr: "QR_STN_01", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
             { id: 1, name: "ฐาน 2", qr: "QR_STN_02", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
@@ -273,7 +283,6 @@
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 },
                 (decodedText) => {
-                    // ใช้ .includes() เพื่อแก้ปัญหากรณีมี http:// หรือช่องว่างแถมมา
                     const matchedStation = STATIONS.find(s => decodedText.includes(s.qr));
                     
                     if (!matchedStation) {
