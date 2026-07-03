@@ -191,15 +191,36 @@
         }
 
         function logout() {
-            stopScan();
-            if(dbRef) dbRef.off(); // ยกเลิกการฟัง Real-time ของคนเก่า
-            currentUserCode = "";
-            document.getElementById('userCode').value = "";
-            document.getElementById('btnLogin').disabled = false;
-            document.getElementById('btnLogin').innerText = "ตกลงเพื่อเข้าสู่ระบบ";
-            document.getElementById('stampScreen').classList.add('hidden');
-            document.getElementById('loginScreen').classList.remove('hidden');
-        }
+                    try {
+                        // 1. หยุดการสแกน
+                        stopScan();
+                        
+                        // 2. ตัดการเชื่อมต่อ Firebase (ถ้ามี)
+                        if(dbRef) {
+                            dbRef.off();
+                            dbRef = null;
+                        }
+                        
+                        // 3. รีเซ็ตตัวแปร
+                        currentUserCode = "";
+                        document.getElementById('userCode').value = "";
+                        document.getElementById('btnLogin').disabled = false;
+                        document.getElementById('btnLogin').innerText = "ตกลงเพื่อเข้าสู่ระบบ";
+                        
+                        // 4. บังคับเปลี่ยนหน้าจอ (เปลี่ยนจากซ่อน/แสดง ให้ชัดเจน)
+                        document.getElementById('stampScreen').classList.add('hidden');
+                        document.getElementById('loginScreen').classList.remove('hidden');
+                        
+                        // 5. เคลียร์สถานะใน DOM 
+                        document.getElementById('successBanner').classList.add('hidden');
+                        document.getElementById('stampArea').classList.remove('hidden');
+        
+                    } catch (error) {
+                        console.error("Logout Error:", error);
+                        // ถ้าเกิด Error ให้บังคับรีเฟรชหน้าเว็บเพื่อออกจากระบบแทน
+                        location.reload(); 
+                    }
+                }
     </script>
 </body>
 </html>
