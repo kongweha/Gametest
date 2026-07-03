@@ -4,110 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบสะสมแต้ม Event</title>
+    <!-- โหลด Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, sans-serif; 
-            background-color: #f0f2f5; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0; 
-            padding: 15px; 
-            box-sizing: border-box; 
-        }
-        .container { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
-            text-align: center; 
-            max-width: 400px; 
-            width: 100%; 
-            position: relative;
-            box-sizing: border-box;
-        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px; box-sizing: border-box; }
+        .container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; position: relative; box-sizing: border-box; }
         .input-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 18px; box-sizing: border-box; text-align: center; letter-spacing: 2px; margin-bottom: 15px;}
-        
-        .stamp-grid { 
-            display: grid; 
-            grid-template-columns: repeat(4, minmax(0, 1fr)); 
-            gap: 8px; 
-            margin: 20px 0; 
-            width: 100%;
-        }
-        
-        .stamp-slot { 
-            aspect-ratio: 1 / 1; 
-            border-radius: 50%; 
-            border: 2px dashed #cbd5e1; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            color: #94a3b8; 
-            transition: all 0.2s; 
-            background: #f8fafc;
-            padding: 2px;
-            box-sizing: border-box;
-            text-align: center;
-            overflow: hidden; 
-        }
-        
-        .stamp-slot div {
-            font-size: clamp(9px, 2.5vw, 12px); 
-            line-height: 1.1;
-            word-break: break-word;
-            padding: 0 2px;
-        }
-
-        .stamp-slot.active { 
-            background-color: #ecfdf5; 
-            border-color: #10b981; 
-            color: #047857; 
-            transform: scale(1.05); 
-            box-shadow: 0 4px 6px rgba(16,185,129,0.15); 
-            font-weight: bold;
-            padding: 2px; /* ให้มีช่องว่างเล็กน้อยไม่ให้ภาพทับเส้นประ */
-        }
-        
-        /* 🛠️ ปรับให้รูปภาพขยายเต็มวงกลม */
-        .stamp-icon { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; /* ทำให้รูปภาพเต็มพื้นที่โดยไม่ผิดสัดส่วน */
-            border-radius: 50%; /* ตัดขอบรูปภาพให้เป็นวงกลม */
-        }
-        
+        .stamp-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 20px 0; width: 100%; }
+        .stamp-slot { aspect-ratio: 1 / 1; border-radius: 50%; border: 2px dashed #cbd5e1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; transition: all 0.2s; background: #f8fafc; padding: 2px; box-sizing: border-box; text-align: center; overflow: hidden; }
+        .stamp-slot div { font-size: clamp(9px, 2.5vw, 12px); line-height: 1.1; word-break: break-word; padding: 0 2px; }
+        .stamp-slot.active { background-color: #ecfdf5; border-color: #10b981; color: #047857; transform: scale(1.05); box-shadow: 0 4px 6px rgba(16,185,129,0.15); font-weight: bold; padding: 2px; }
+        .stamp-icon { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
         button { padding: 12px 20px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-bottom: 10px; transition: 0.2s; box-sizing: border-box;}
         .btn-primary { background-color: #3b82f6; color: white; }
         .btn-redeem { background-color: #ef4444; color: white; margin-top: 15px;}
         .btn-redeem:disabled { background-color: #fca5a5; cursor: not-allowed; }
-        .btn-lucky { background-color: #8b5cf6; color: white; margin-top: 15px; animation: pulse 2s infinite;}
         .btn-cancel { background-color: #64748b; color: white; display: none; }
         .btn-logout { background-color: #94a3b8; color: white; margin-top: 10px; font-size: 14px; padding: 8px;}
-        
         #reader { width: 100%; margin-bottom: 15px; display: none; border-radius: 10px; overflow: hidden; }
         .hidden { display: none !important; }
         .user-info { background-color: #e2e8f0; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #475569; display: inline-block; margin-bottom: 10px; }
-        .loading { font-style: italic; color: #3b82f6; display: none; margin-top: 10px; font-weight: bold; font-size: 14px;}
-        
-        .sync-indicator { position: absolute; top: 15px; right: 15px; width: 10px; height: 10px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; animation: blink 1.5s infinite; display: none; }
-        
         .success-banner { background-color: #fef3c7; border: 2px solid #f59e0b; color: #d97706; padding: 20px; border-radius: 15px; margin: 20px 0; font-size: 18px; font-weight: bold;}
         
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
-        @media (max-width: 480px) {
-            .container { 
-                padding: 20px 10px; 
-            }
-            .stamp-grid {
-                gap: 5px; 
-            }
-        }
+        @media (max-width: 480px) { .container { padding: 20px 10px; } .stamp-grid { gap: 5px; } }
     </style>
 </head>
 <body>
@@ -118,11 +39,9 @@
             <input type="tel" id="userCode" maxlength="10" placeholder="กรอกรหัส 10 หลัก" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
         </div>
         <button id="btnLogin" class="btn-primary" onclick="login()">ตกลงเพื่อเข้าสู่ระบบ</button>
-        <div id="loadingLogin" class="loading">⏳ กำลังดึงข้อมูล...</div>
     </div>
 
     <div class="container hidden" id="stampScreen">
-        <div id="syncDot" class="sync-indicator" title="อัปเดตข้อมูลแบบ Real-time"></div>
         <h2>🎉 บัตรสะสมแต้ม</h2>
         <div class="user-info" id="displayUserCode">รหัสสมาชิก: XXXXXXXXXX</div>
         
@@ -137,18 +56,27 @@
             <div id="reader"></div>
             <button id="btnScan" class="btn-primary" onclick="startScan()">📷 สแกน QR Code ฐาน</button>
             <button id="btnCancel" class="btn-cancel" onclick="stopScan()">❌ ยกเลิก</button>
-            <div id="loadingAction" class="loading">⏳ กำลังบันทึกข้อมูลหลังบ้าน...</div>
             
             <button id="btnRedeem" class="btn-redeem" onclick="redeemReward()" disabled>🎁 แลกของรางวัล (ต้องครบ 7 ฐาน)</button>
         </div>
-        
-        <button id="btnLucky" class="btn-lucky hidden" onclick="alert('ฟีเจอร์สแกนลุ้นโชคกำลังมาเร็วๆ นี้!')">🔮 สแกนเพื่อลุ้นของรางวัล</button>
         
         <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxpt48SWOSpXcKlliR_ihZiE09OX_3Ifw03Cs48UC8Am3qBfDPa8O3ADMSbgOuiUPodag/exec";
+        // 🔑 1. นำ Firebase Config เดียวกับหน้า Admin มาวางตรงนี้
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
         
         const STATIONS = [
             { id: 0, name: "Library Playground", qr: "QR_STN_01", imgActive: "https://lh3.googleusercontent.com/d/1IPeKd6HQZ_-DLhHz1fF4mncM4lw7babh" },
@@ -160,82 +88,41 @@
             { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" }
         ];
 
-        let currentUser = { code: "", stations: Array(7).fill(false), isRedeemed: false };
+        let currentUserCode = "";
         let html5QrCode;
-        let syncInterval = null; 
+        let dbRef = null;
 
-        function login() {
+        async function login() {
             const input = document.getElementById('userCode').value;
             if (input.length !== 10) { alert("กรุณากรอกรหัสให้ครบ 10 หลัก"); return; }
             
-            document.getElementById('loadingLogin').style.display = 'block';
             document.getElementById('btnLogin').disabled = true;
+            document.getElementById('btnLogin').innerText = "กำลังตรวจสอบ...";
 
-            fetch(`${API_URL}?action=checkLogin&userCode=${input}`)
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('loadingLogin').style.display = 'none';
-                    document.getElementById('btnLogin').disabled = false;
-                    
-                    if (data.success) {
-                        currentUser.code = input;
-                        currentUser.stations = data.stations;
-                        currentUser.isRedeemed = data.isRedeemed;
-                        
-                        document.getElementById('displayUserCode').innerText = `รหัสสมาชิก: ${currentUser.code}`;
-                        document.getElementById('loginScreen').classList.add('hidden');
-                        document.getElementById('stampScreen').classList.remove('hidden');
-                        
-                        renderUI();
-                        startRealTimeSync(); 
-                    } else {
-                        alert(data.message);
-                    }
-                }).catch(err => { 
-                    alert("เกิดข้อผิดพลาดเครือข่าย"); 
-                    document.getElementById('loadingLogin').style.display = 'none';
-                    document.getElementById('btnLogin').disabled = false;
+            // เช็คว่ามีรหัสนี้ในระบบไหม
+            const snapshot = await db.ref(`users/${input}`).once('value');
+            if (snapshot.exists()) {
+                currentUserCode = input;
+                document.getElementById('displayUserCode').innerText = `รหัสสมาชิก: ${currentUserCode}`;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('stampScreen').classList.remove('hidden');
+                
+                // ฟังการเปลี่ยนแปลงแบบ Real-time
+                dbRef = db.ref(`users/${currentUserCode}`);
+                dbRef.on('value', (snap) => {
+                    renderUI(snap.val());
                 });
-        }
-
-        function startRealTimeSync() {
-            document.getElementById('syncDot').style.display = 'block';
-            
-            syncInterval = setInterval(() => {
-                if (!currentUser.code) return;
-
-                fetch(`${API_URL}?action=checkLogin&userCode=${currentUser.code}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            const isChanged = 
-                                JSON.stringify(currentUser.stations) !== JSON.stringify(data.stations) || 
-                                currentUser.isRedeemed !== data.isRedeemed;
-
-                            if (isChanged) {
-                                currentUser.stations = data.stations;
-                                currentUser.isRedeemed = data.isRedeemed;
-                                renderUI();
-                            }
-                        }
-                    }).catch(err => console.log("Real-time sync failed temporarily"));
-            }, 4000); 
-        }
-
-        function stopRealTimeSync() {
-            if (syncInterval) {
-                clearInterval(syncInterval);
-                syncInterval = null;
+            } else {
+                alert("❌ ไม่พบรหัสนี้ในระบบ");
+                document.getElementById('btnLogin').disabled = false;
+                document.getElementById('btnLogin').innerText = "ตกลงเพื่อเข้าสู่ระบบ";
             }
-            document.getElementById('syncDot').style.display = 'none';
         }
 
-        function renderUI() {
-            if (currentUser.isRedeemed) {
+        function renderUI(userData) {
+            if (userData.isRedeemed) {
                 document.getElementById('stampArea').classList.add('hidden');
                 document.getElementById('successBanner').classList.remove('hidden');
-                document.getElementById('btnLucky').classList.remove('hidden');
-                stopRealTimeSync(); 
                 return;
             }
 
@@ -243,28 +130,24 @@
             grid.innerHTML = ''; 
             let count = 0;
 
+            const userStations = userData.stations || Array(7).fill(false);
+
             STATIONS.forEach((st, index) => {
                 const slot = document.createElement('div');
-                const isPassed = currentUser.stations[index];
+                const isPassed = userStations[index];
                 
                 if (isPassed) {
                     count++;
                     slot.className = 'stamp-slot active';
-                    /* 🛠️ ลบชื่อฐานออก แสดงเฉพาะรูปภาพอย่างเดียวเมื่อสแกนผ่านแล้ว */
-                    slot.innerHTML = `
-                        <img src="${st.imgActive}" class="stamp-icon" alt="ผ่านแล้ว">
-                    `;
+                    slot.innerHTML = `<img src="${st.imgActive}" class="stamp-icon" alt="ผ่านแล้ว">`;
                 } else {
                     slot.className = 'stamp-slot';
-                    slot.innerHTML = `
-                        <div style="font-weight: bold;">${st.name}</div>
-                    `;
+                    slot.innerHTML = `<div style="font-weight: bold;">${st.name}</div>`;
                 }
                 grid.appendChild(slot);
             });
 
             document.getElementById('statusText').innerText = count === 7 ? "🎉 เล่นครบ 7 ฐานแล้ว!" : `ผ่านแล้ว: ${count} / 7 ฐาน`;
-            
             document.getElementById('btnRedeem').disabled = (count < 7);
             document.getElementById('btnScan').style.display = (count === 7) ? 'none' : 'block';
         }
@@ -276,21 +159,16 @@
 
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 },
-                (decodedText) => {
+                async (decodedText) => {
                     const matchedStation = STATIONS.find(s => decodedText.includes(s.qr));
-                    
                     if (!matchedStation) {
-                        alert(`❌ QR Code ไม่ถูกต้อง ไม่ใช่ของกิจกรรมนี้\nระบบอ่านได้ว่า: "${decodedText}"`);
+                        alert(`❌ QR Code ไม่ถูกต้อง`);
                         stopScan(); return;
                     }
-
-                    if (currentUser.stations[matchedStation.id]) {
-                        alert(`⚠️ คุณผ่าน ${matchedStation.name} ไปแล้วครับ!`);
-                        stopScan(); return;
-                    }
-
                     stopScan();
-                    processStamp(matchedStation);
+                    
+                    // บันทึกผ่าน Firebase ทันที
+                    await db.ref(`users/${currentUserCode}/stations/${matchedStation.id}`).set(true);
                 }, (err) => {}
             ).catch(err => { alert("เปิดกล้องไม่ได้"); stopScan(); });
         }
@@ -305,44 +183,19 @@
             }
         }
 
-        function processStamp(station) {
-            currentUser.stations[station.id] = true;
-            renderUI(); 
-            document.getElementById('loadingAction').style.display = 'block';
-
-            fetch(`${API_URL}?action=addStamp&userCode=${currentUser.code}&stationIndex=${station.id}`)
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('loadingAction').style.display = 'none';
-                    if (!data.success) {
-                        alert("เกิดข้อผิดพลาดในการบันทึกหลังบ้าน");
-                        currentUser.stations[station.id] = false; 
-                        renderUI();
-                    }
-                });
-        }
-
-        function redeemReward() {
+        async function redeemReward() {
             if (confirm("ต้องการกดแลกของรางวัลใช่หรือไม่? (ไม่สามารถย้อนกลับได้)")) {
-                document.getElementById('btnRedeem').innerText = "กำลังดำเนินการ...";
-                document.getElementById('btnRedeem').disabled = true;
-
-                fetch(`${API_URL}?action=redeemReward&userCode=${currentUser.code}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if(data.success) {
-                            currentUser.isRedeemed = true;
-                            renderUI(); 
-                        }
-                    });
+                await db.ref(`users/${currentUserCode}/isRedeemed`).set(true);
             }
         }
 
         function logout() {
             stopScan();
-            stopRealTimeSync(); 
-            currentUser = { code: "", stations: Array(7).fill(false), isRedeemed: false };
+            if(dbRef) dbRef.off(); // ยกเลิกการฟัง Real-time ของคนเก่า
+            currentUserCode = "";
             document.getElementById('userCode').value = "";
+            document.getElementById('btnLogin').disabled = false;
+            document.getElementById('btnLogin').innerText = "ตกลงเพื่อเข้าสู่ระบบ";
             document.getElementById('stampScreen').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
         }
