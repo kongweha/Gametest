@@ -69,14 +69,15 @@
             transform: scale(1.05); 
             box-shadow: 0 4px 6px rgba(16,185,129,0.15); 
             font-weight: bold;
+            padding: 2px; /* ให้มีช่องว่างเล็กน้อยไม่ให้ภาพทับเส้นประ */
         }
         
+        /* 🛠️ ปรับให้รูปภาพขยายเต็มวงกลม */
         .stamp-icon { 
-            width: clamp(16px, 5vw, 28px); 
-            height: clamp(16px, 5vw, 28px); 
-            margin-bottom: 2px; 
-            object-fit: contain; 
-            border-radius: 4px;
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; /* ทำให้รูปภาพเต็มพื้นที่โดยไม่ผิดสัดส่วน */
+            border-radius: 50%; /* ตัดขอบรูปภาพให้เป็นวงกลม */
         }
         
         button { padding: 12px 20px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-bottom: 10px; transition: 0.2s; box-sizing: border-box;}
@@ -149,7 +150,6 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxpt48SWOSpXcKlliR_ihZiE09OX_3Ifw03Cs48UC8Am3qBfDPa8O3ADMSbgOuiUPodag/exec";
         
-        // 🎯 อัปเดตลิงก์รูปภาพด้วยรูปแบบ lh3.googleusercontent.com 
         const STATIONS = [
             { id: 0, name: "Library Playground", qr: "QR_STN_01", imgActive: "https://lh3.googleusercontent.com/d/1IPeKd6HQZ_-DLhHz1fF4mncM4lw7babh" },
             { id: 1, name: "Discovery Lab", qr: "QR_STN_02", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
@@ -250,9 +250,9 @@
                 if (isPassed) {
                     count++;
                     slot.className = 'stamp-slot active';
+                    /* 🛠️ ลบชื่อฐานออก แสดงเฉพาะรูปภาพอย่างเดียวเมื่อสแกนผ่านแล้ว */
                     slot.innerHTML = `
                         <img src="${st.imgActive}" class="stamp-icon" alt="ผ่านแล้ว">
-                        <div>${st.name}</div>
                     `;
                 } else {
                     slot.className = 'stamp-slot';
