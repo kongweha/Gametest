@@ -3,123 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard สรุปข้อมูล (Admin)</title>
-    
-    <!-- นำเข้า Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
+    <title>ระบบหลังบ้าน (Admin Dashboard)</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f8fafc; padding: 20px; }
-        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; }
-        h2 { color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            background-color: #f1f5f9; 
+            margin: 0; 
+            padding: 20px; 
+            color: #334155;
+        }
+        .admin-container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            max-width: 1000px; 
+            margin: 0 auto; 
+        }
+        h1 { margin-top: 0; color: #1e293b; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; text-align: center; }
-        th, td { padding: 12px; border: 1px solid #e2e8f0; }
-        th { background-color: #f1f5f9; color: #334155; font-weight: bold; white-space: nowrap; }
-        tr:hover { background-color: #f8fafc; }
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        button { 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            font-weight: bold; 
+            transition: 0.2s; 
+        }
+        .btn-primary { background-color: #3b82f6; color: white; }
+        .btn-primary:hover { background-color: #2563eb; }
+        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-danger:hover { background-color: #dc2626; }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .card h3 { margin: 0 0 10px 0; font-size: 14px; color: #64748b; }
+        .card .value { font-size: 28px; font-weight: bold; color: #0f172a; }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: white;
+            font-size: 14px;
+        }
+        th, td { 
+            padding: 12px 15px; 
+            border-bottom: 1px solid #e2e8f0; 
+            text-align: center; 
+        }
+        th { 
+            background-color: #f8fafc; 
+            color: #475569; 
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover { background-color: #f1f5f9; }
         
-        .pass { color: #10b981; font-weight: bold; font-size: 16px; }
-        .fail { color: #cbd5e1; }
-        .redeemed { background-color: #fef3c7; color: #d97706; font-weight: bold; padding: 4px 8px; border-radius: 5px; }
+        .badge { 
+            padding: 5px 10px; 
+            border-radius: 12px; 
+            font-size: 12px; 
+            font-weight: bold; 
+        }
+        .badge.none { background: #e2e8f0; color: #64748b; }
+        .badge.playing { background: #fef08a; color: #854d0e; }
+        .badge.completed { background: #bbf7d0; color: #166534; }
+        .badge.redeemed { background: #bfdbfe; color: #1e40af; }
         
-        .stat-box { display: flex; gap: 20px; margin-bottom: 20px; }
-        .stat-card { background: #3b82f6; color: white; padding: 15px 25px; border-radius: 10px; font-size: 18px; font-weight: bold; }
-        .stat-card.success { background: #10b981; }
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>📊 ระบบจัดการหลังบ้าน (Real-time Dashboard)</h2>
-        
-        <div class="stat-box">
-            <div class="stat-card">ผู้เข้าร่วมทั้งหมด: <span id="totalUsers">0</span> คน</div>
-            <div class="stat-card success">แลกรางวัลแล้ว: <span id="totalRedeemed">0</span> คน</div>
+    <div class="admin-container">
+        <div class="action-bar">
+            <h1>⚙️ ระบบจัดการหลังบ้าน (Admin)</h1>
+            <div>
+                <button class="btn-primary" onclick="generateCodes()">🔄 สร้างรหัส 500 รหัส</button>
+                <button class="btn-danger" onclick="clearData()">🗑️ ล้างข้อมูล</button>
+            </div>
         </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>รหัสสมาชิก</th>
-                    <th>ฐาน 1</th><th>ฐาน 2</th><th>ฐาน 3</th><th>ฐาน 4</th><th>ฐาน 5</th>
-                    <th>AIX (6)</th><th>ฐาน 7</th><th>ฐาน 8</th><th>ฐาน 9</th><th>ฐาน 10</th>
-                    <th>สถานะของรางวัล</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <tr><td colspan="12">⏳ กำลังโหลดข้อมูล...</td></tr>
-            </tbody>
-        </table>
+        <div class="stats-cards">
+            <div class="card">
+                <h3>รหัสทั้งหมด</h3>
+                <div class="value" id="statTotal">0</div>
+            </div>
+            <div class="card">
+                <h3>ผ่านครบ 7 ฐานแล้ว</h3>
+                <div class="value" id="statCompleted" style="color: #10b981;">0</div>
+            </div>
+            <div class="card">
+                <h3>แลกรางวัลแล้ว</h3>
+                <div class="value" id="statRedeemed" style="color: #3b82f6;">0</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 10%;">ลำดับ</th>
+                        <th style="width: 25%;">รหัสสมาชิก (10 หลัก)</th>
+                        <th style="width: 25%;">จำนวนฐานที่ผ่าน</th>
+                        <th style="width: 20%;">สถานะการเล่น</th>
+                        <th style="width: 20%;">แลกรางวัล</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- ข้อมูลจะถูกสร้างผ่าน JavaScript -->
+                    <tr>
+                        <td colspan="5" style="padding: 30px; color: #94a3b8;">ยังไม่มีข้อมูล กด "สร้างรหัส 500 รหัส" เพื่อเริ่มต้น</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
-        // ==========================================
-        // 🎯 นำ Firebase Config ของคุณมาวางตรงนี้ (ตัวเดียวกับไฟล์ index.html)
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyAl3zeSfVEFcCzH7f59xI4p2JIGRmKv84Q",
-            authDomain: "test-c7a89.firebaseapp.com",
-            projectId: "test-c7a89",
-            storageBucket: "test-c7a89.firebasestorage.app",
-            messagingSenderId: "991568384353",
-            appId: "1:991568384353:web:a793fcb490810aac47b520",
-            measurementId: "G-R3VS4FMDSX"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        // ฟังก์ชันดึงข้อมูลมาทำเป็นตาราง
-        const userRef = db.ref('users');
-        userRef.on('value', (snapshot) => {
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = ''; // ล้างข้อมูลเก่า
-            
-            let totalUsers = 0;
-            let totalRedeemed = 0;
-
-            if (snapshot.exists()) {
-                const data = snapshot.val();
+        // ฟังก์ชันสร้างรหัสสุ่ม 10 หลัก จำนวน 500 รหัส แบบไม่ซ้ำ
+        function generateCodes() {
+            if(confirm("การสร้างใหม่จะลบข้อมูลเดิมทั้งหมด ยืนยันหรือไม่?")) {
+                let codesSet = new Set();
                 
-                // วนลูปข้อมูลผู้ใช้แต่ละคนมาสร้างแถวตาราง
-                for (let userCode in data) {
-                    totalUsers++;
-                    const user = data[userCode];
-                    const tr = document.createElement('tr');
-                    
-                    // สร้างคอลัมน์รหัสสมาชิก
-                    let html = `<td><strong>${userCode}</strong></td>`;
-                    
-                    // สร้างคอลัมน์ฐาน 1-10
-                    for(let i=0; i<10; i++) {
-                        const isPassed = user.stations ? user.stations[i] : false;
-                        if(isPassed) {
-                            html += `<td class="pass">✔️</td>`;
-                        } else {
-                            html += `<td class="fail">-</td>`;
-                        }
-                    }
-
-                    // สร้างคอลัมน์สถานะของรางวัล
-                    if(user.isRedeemed) {
-                        totalRedeemed++;
-                        html += `<td><span class="redeemed">🎁 รับแล้ว</span></td>`;
-                    } else {
-                        html += `<td>-</td>`;
-                    }
-
-                    tr.innerHTML = html;
-                    tableBody.appendChild(tr);
+                // สุ่มจนกว่าจะได้ครบ 500 รหัส
+                while(codesSet.size < 500) {
+                    // สุ่มเลข 10 หลัก (ตั้งแต่ 1000000000 ถึง 9999999999)
+                    let randomCode = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+                    codesSet.add(randomCode);
                 }
-            } else {
-                tableBody.innerHTML = '<tr><td colspan="12">ยังไม่มีข้อมูลผู้เข้าร่วม</td></tr>';
+
+                // แปลงเป็น Array และกำหนดค่าเริ่มต้น (จำลองฐานข้อมูล)
+                let database = Array.from(codesSet).map(code => ({
+                    code: code,
+                    stations: Array(7).fill(false), // 7 ฐาน
+                    isRedeemed: false
+                }));
+
+                // เซฟลง LocalStorage
+                localStorage.setItem('mockDatabase', JSON.stringify(database));
+                alert("สร้างรหัส 500 รหัสเรียบร้อยแล้ว!");
+                renderTable();
+            }
+        }
+
+        function clearData() {
+            if(confirm("คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด?")) {
+                localStorage.removeItem('mockDatabase');
+                renderTable();
+            }
+        }
+
+        // ฟังก์ชันดึงข้อมูลมาแสดงในตาราง
+        function renderTable() {
+            const dataStr = localStorage.getItem('mockDatabase');
+            const tbody = document.getElementById('tableBody');
+            
+            if(!dataStr) {
+                tbody.innerHTML = '<tr><td colspan="5" style="padding: 30px; color: #94a3b8;">ยังไม่มีข้อมูล กด "สร้างรหัส 500 รหัส" เพื่อเริ่มต้น</td></tr>';
+                document.getElementById('statTotal').innerText = "0";
+                document.getElementById('statCompleted').innerText = "0";
+                document.getElementById('statRedeemed').innerText = "0";
+                return;
             }
 
+            const database = JSON.parse(dataStr);
+            tbody.innerHTML = '';
+            
+            let completedCount = 0;
+            let redeemedCount = 0;
+
+            database.forEach((user, index) => {
+                // นับจำนวนฐานที่ผ่าน (ค่าที่เป็น true)
+                const passedStations = user.stations.filter(s => s === true).length;
+                
+                if(passedStations === 7) completedCount++;
+                if(user.isRedeemed) redeemedCount++;
+
+                // จัดการหน้าตา Badge สถานะ
+                let statusBadge = '';
+                if(passedStations === 0) statusBadge = '<span class="badge none">ยังไม่เริ่มเล่น</span>';
+                else if(passedStations > 0 && passedStations < 7) statusBadge = '<span class="badge playing">กำลังเล่น</span>';
+                else statusBadge = '<span class="badge completed">ผ่านครบแล้ว</span>';
+
+                let redeemedBadge = user.isRedeemed ? '<span class="badge redeemed">รับแล้ว 🎁</span>' : '<span class="badge none">ยังไม่รับ</span>';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td style="font-family: monospace; font-size: 16px; font-weight: bold; letter-spacing: 1px;">${user.code}</td>
+                    <td><b>${passedStations}</b> / 7</td>
+                    <td>${statusBadge}</td>
+                    <td>${redeemedBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
             // อัปเดตตัวเลขสรุปผล
-            document.getElementById('totalUsers').innerText = totalUsers;
-            document.getElementById('totalRedeemed').innerText = totalRedeemed;
-        });
+            document.getElementById('statTotal').innerText = database.length;
+            document.getElementById('statCompleted').innerText = completedCount;
+            document.getElementById('statRedeemed').innerText = redeemedCount;
+        }
+
+        // โหลดข้อมูลเมื่อเปิดหน้าเว็บ
+        window.onload = renderTable;
     </script>
 </body>
 </html>
