@@ -13,8 +13,11 @@
         .stamp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 25px 0; }
         .stamp-slot { aspect-ratio: 1 / 1; border-radius: 15px; border: 2px dashed #cbd5e1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: #94a3b8; transition: all 0.2s; background: #f8fafc;}
         
-        .stamp-slot.active { background-color: #10b981; border-color: #10b981; color: white; transform: scale(1.05); box-shadow: 0 4px 6px rgba(16,185,129,0.3); font-weight: bold;}
-        .stamp-icon { font-size: 20px; margin-bottom: 2px; }
+        /* สไตล์เวลาเก็บฐานสำเร็จ */
+        .stamp-slot.active { background-color: #ecfdf5; border-color: #10b981; color: #047857; transform: scale(1.05); box-shadow: 0 4px 6px rgba(16,185,129,0.15); font-weight: bold;}
+        
+        /* ปรับ CSS สำหรับรูปภาพแทน Emoji */
+        .stamp-icon { width: 35px; height: 35px; margin-bottom: 5px; object-fit: contain; border-radius: 5px; }
         
         button { padding: 12px 20px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-bottom: 10px; transition: 0.2s; }
         .btn-primary { background-color: #3b82f6; color: white; }
@@ -59,6 +62,7 @@
         </div>
 
         <div id="stampArea">
+            <!-- ตารางแสตมป์ -->
             <div class="stamp-grid" id="stampGrid"></div>
             <div id="statusText" style="font-weight: bold; margin-bottom: 15px;">แต้มปัจจุบัน: 0 / 10</div>
             
@@ -78,22 +82,24 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxpt48SWOSpXcKlliR_ihZiE09OX_3Ifw03Cs48UC8Am3qBfDPa8O3ADMSbgOuiUPodag/exec";
         
+        // 🎯 ตั้งค่าชื่อฐานและรูปภาพ (เปลี่ยน URL รูปใน imgInactive และ imgActive ให้เป็นรูปของคุณ)
+        // เพื่อให้ง่ายต่อการทดสอบ ผมใส่รูป Placeholder ให้เห็นภาพก่อน
         const STATIONS = [
-            { id: 0, name: "ฐาน 1", qr: "QR_STN_01" },
-            { id: 1, name: "ฐาน 2", qr: "QR_STN_02" },
-            { id: 2, name: "ฐาน 3", qr: "QR_STN_03" },
-            { id: 3, name: "ฐาน 4", qr: "QR_STN_04" },
-            { id: 4, name: "ฐาน 5", qr: "QR_STN_05" },
-            { id: 5, name: "AIX",    qr: "QR_STN_06" }, 
-            { id: 6, name: "ฐาน 7", qr: "QR_STN_07" },
-            { id: 7, name: "ฐาน 8", qr: "QR_STN_08" },
-            { id: 8, name: "ฐาน 9", qr: "QR_STN_09" },
-            { id: 9, name: "ฐาน 10", qr: "QR_STN_10" }
+            { id: 0, name: "ฐาน 1", qr: "QR_STN_01", imgInactive: "https://placehold.co/100x100/e2e8f0/94a3b8?text=?", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 1, name: "ฐาน 2", qr: "QR_STN_02", imgInactive: "https://placehold.co/100x100/e2e8f0/94a3b8?text=?", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 2, name: "ฐาน 3", qr: "QR_STN_03", imgInactive: "https://placehold.co/100x100/e2e8f0/94a3b8?text=?", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 3, name: "ฐาน 4", qr: "QR_STN_04", imgInactive: "https://placehold.co/100x100/e2e8f0/94a3b8?text=?", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 4, name: "ฐาน 5", qr: "QR_STN_05", imgInactive: "https://placehold.co/100x100/e2e8f0/94a3b8?text=?", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 5, name: "AIX",    qr: "QR_STN_06", imgInactive: "https://placehold.co/100x100/e2e8f0/94a3b8?text=?", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 6, name: "ฐาน 7", qr: "QR_STN_07", imgInactive: "https://placehold.co/100x100/e2e8f0/94a3b8?text=?", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 7, name: "ฐาน 8", qr: "QR_STN_08", imgInactive: "https://placehold.co/100x100/e2e8f0/94a3b8?text=?", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 8, name: "ฐาน 9", qr: "QR_STN_09", imgInactive: "https://placehold.co/100x100/e2e8f0/94a3b8?text=?", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" },
+            { id: 9, name: "ฐาน 10", qr: "QR_STN_10", imgInactive: "https://placehold.co/100x100/e2e8f0/94a3b8?text=?", imgActive: "https://placehold.co/100x100/10b981/ffffff?text=OK" }
         ];
 
         let currentUser = { code: "", stations: Array(10).fill(false), isRedeemed: false };
         let html5QrCode;
-        let syncInterval = null; // ตัวแปรสำหรับเก็บ Timer ของ Real-time
+        let syncInterval = null; 
 
         function login() {
             const input = document.getElementById('userCode').value;
@@ -118,7 +124,7 @@
                         document.getElementById('stampScreen').classList.remove('hidden');
                         
                         renderUI();
-                        startRealTimeSync(); // เริ่มต้นดึงข้อมูลอัตโนมัติเมื่อเข้าระบบสำเร็จ
+                        startRealTimeSync(); 
                     } else {
                         alert(data.message);
                     }
@@ -133,7 +139,6 @@
         function startRealTimeSync() {
             document.getElementById('syncDot').style.display = 'block';
             
-            // ตั้งเวลาดึงข้อมูลทุกๆ 4 วินาที (ปรับตัวเลข 4000 ได้ตามต้องการ, แนะนำไม่ให้ต่ำกว่า 3000 เพื่อป้องกัน Google บล็อก)
             syncInterval = setInterval(() => {
                 if (!currentUser.code) return;
 
@@ -141,7 +146,6 @@
                     .then(res => res.json())
                     .then(data => {
                         if (data.success) {
-                            // เช็คว่ามีอะไรเปลี่ยนแปลงไหม ถ้ามีค่อยวาดหน้าจอใหม่ (กันจอกระพริบ)
                             const isChanged = 
                                 JSON.stringify(currentUser.stations) !== JSON.stringify(data.stations) || 
                                 currentUser.isRedeemed !== data.isRedeemed;
@@ -164,13 +168,13 @@
             document.getElementById('syncDot').style.display = 'none';
         }
 
-        // ฟังก์ชันอัปเดตหน้าจอทั้งหมด (UI)
+        // ฟังก์ชันอัปเดตหน้าจอทั้งหมด (UI) โดยแทรกรูปภาพตามสถานะ
         function renderUI() {
             if (currentUser.isRedeemed) {
                 document.getElementById('stampArea').classList.add('hidden');
                 document.getElementById('successBanner').classList.remove('hidden');
                 document.getElementById('btnLucky').classList.remove('hidden');
-                stopRealTimeSync(); // หยุดดึงข้อมูลถ้าแลกรางวัลไปแล้ว
+                stopRealTimeSync(); 
                 return;
             }
 
@@ -185,10 +189,12 @@
                 if (isPassed) {
                     count++;
                     slot.className = 'stamp-slot active';
-                    slot.innerHTML = `<div class="stamp-icon">⭐</div><div>${st.name}</div>`;
+                    // ใช้ imgActive
+                    slot.innerHTML = `<img src="${st.imgActive}" class="stamp-icon" alt="ผ่านแล้ว"><div style="font-size: 11px;">${st.name}</div>`;
                 } else {
                     slot.className = 'stamp-slot';
-                    slot.innerHTML = `<div class="stamp-icon">⬜</div><div>${st.name}</div>`;
+                    // ใช้ imgInactive
+                    slot.innerHTML = `<img src="${st.imgInactive}" class="stamp-icon" alt="ยังไม่ผ่าน"><div style="font-size: 11px;">${st.name}</div>`;
                 }
                 grid.appendChild(slot);
             });
@@ -270,7 +276,7 @@
 
         function logout() {
             stopScan();
-            stopRealTimeSync(); // หยุดดึงข้อมูลเมื่อออกจากระบบ
+            stopRealTimeSync(); 
             currentUser = { code: "", stations: Array(10).fill(false), isRedeemed: false };
             document.getElementById('userCode').value = "";
             document.getElementById('stampScreen').classList.add('hidden');
