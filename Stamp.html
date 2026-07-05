@@ -4,54 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบสะสมแต้ม Event</title>
-    <!-- โหลด Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px; box-sizing: border-box; }
-        .container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; max-width: 450px; width: 100%; position: relative; box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px; }
         
-        /* สไตล์สำหรับกล่องกรอกรหัส 6 ช่อง */
-        .otp-container { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; }
-        .otp-box { width: 45px; height: 55px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 24px; text-align: center; font-weight: bold; color: #334155; }
+        .container { background: white; padding: 25px 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; max-width: 420px; width: 100%; position: relative; }
+        
+        /* สไตล์สำหรับกล่องกรอกรหัส 6 ช่องแบบ Responsive */
+        .otp-container { display: flex; gap: 8px; justify-content: center; margin: 20px 0; }
+        .otp-box { width: 45px; height: 50px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 22px; text-align: center; font-weight: bold; color: #334155; -webkit-appearance: none; }
         .otp-box:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 5px rgba(59,130,246,0.3); }
 
-        /* สไตล์สำหรับแผนที่วงกลม */
-        .map-container { position: relative; width: 320px; height: 320px; margin: 20px auto; }
-        .station-node { position: absolute; width: 85px; height: 85px; border-radius: 50%; border: 2px dashed #94a3b8; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 11px; font-weight: bold; color: #64748b; cursor: pointer; transition: 0.2s; overflow: hidden; padding: 4px; box-sizing: border-box; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .station-node:hover { transform: scale(1.05); border-color: #3b82f6; }
-        .station-node.stamped { border: none; background: transparent; padding: 0; pointer-events: none; }
-        .station-node img { width: 100%; height: 100%; object-fit: cover; }
+        /* แผนที่วงกลมล็อกตำแหน่งนิ่งสนิทตามภาพอ้างอิง */
+        .map-container { position: relative; width: 340px; height: 340px; margin: 20px auto; transform-origin: center; }
+        .station-node { position: absolute; width: 85px; height: 85px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; border: none; background: none; padding: 0; margin: 0; transition: none; }
+        .station-node.unstamped { cursor: pointer; }
+        .station-node.stamped { cursor: default; }
+        .station-node img { width: 100%; height: 100%; object-fit: contain; display: block; }
         
-        /* การจัดวางตำแหน่งวงกลม (อิงตามภาพ 2.png) */
-        .st-0 { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 110px; height: 110px; z-index: 2; font-size: 12px;} /* ตรงกลาง */
-        .st-4 { top: 0; left: 50%; transform: translate(-50%, 0); } /* บน */
-        .st-1 { top: 15%; right: -10px; } /* บนขวา */
-        .st-6 { bottom: 15%; right: -10px; } /* ล่างขวา */
-        .st-5 { bottom: 0; left: 50%; transform: translate(-50%, 0); } /* ล่าง */
-        .st-2 { bottom: 15%; left: -10px; } /* ล่างซ้าย */
-        .st-3 { top: 15%; left: -10px; } /* บนซ้าย */
+        /* พิกัดตำแหน่งวงกลมแบบคงที่ ไม่มีการขยับเขยื้อน */
+        .st-0 { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 110px; height: 110px; } /* Library Playground (ตรงกลาง) */
+        .st-4 { top: 0px; left: 50%; transform: translateX(-50%); } /* Media Studio (บน) */
+        .st-1 { top: 45px; right: 0px; } /* Discovery Lab (บนขวา) */
+        .st-6 { bottom: 45px; right: 0px; } /* Safety Checkpoint (ล่างขวา) */
+        .st-5 { bottom: 0px; left: 50%; transform: translateX(-50%); } /* Tech Station (ล่าง) */
+        .st-2 { bottom: 45px; left: 0px; } /* Play Zone (ล่างซ้าย) */
+        .st-3 { top: 45px; left: 0px; } /* Treasure Corner (บนซ้าย) */
 
-        button { padding: 12px 20px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-bottom: 10px; transition: 0.2s; box-sizing: border-box;}
+        button { padding: 12px 20px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-bottom: 10px; transition: 0.2s; }
         .btn-primary { background-color: #3b82f6; color: white; }
         .btn-redeem { background-color: #ef4444; color: white; margin-top: 15px;}
         .btn-redeem:disabled { background-color: #fca5a5; cursor: not-allowed; }
-        .btn-cancel { background-color: #64748b; color: white; display: none; }
+        .btn-cancel { background-color: #64748b; color: white; display: none; margin-top: 10px; }
         .btn-logout { background-color: #94a3b8; color: white; margin-top: 10px; font-size: 14px; padding: 8px;}
         
-        #reader { width: 100%; margin-bottom: 15px; display: none; border-radius: 10px; overflow: hidden; }
+        #reader { width: 100%; margin-bottom: 15px; display: none; border-radius: 10px; overflow: hidden; background: #000; }
         .hidden { display: none !important; }
         .user-info { background-color: #e2e8f0; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #475569; display: inline-block; margin-bottom: 10px; }
         .success-banner { background-color: #fef3c7; border: 2px solid #f59e0b; color: #d97706; padding: 20px; border-radius: 15px; margin: 20px 0; font-size: 18px; font-weight: bold;}
+
+        /* ปรับย่อขนาดแผนที่อัตโนมัติสำหรับหน้าจอมือถือขนาดเล็กมาก */
+        @media (max-width: 375px) {
+            .otp-box { width: 38px; height: 45px; font-size: 18px; }
+            .otp-container { gap: 5px; }
+            .map-container { transform: scale(0.85); margin: -15px auto; }
+        }
     </style>
 </head>
 <body>
 
     <div class="container" id="loginScreen">
         <h2>🔐 เข้าสู่ระบบสะสมแต้ม</h2>
-        
-        <!-- เปลี่ยน Input เป็น 6 ช่องแยกกัน -->
         <div class="otp-container" id="otpGroup">
             <input type="tel" class="otp-box" maxlength="1" oninput="handleOtp(this, event)">
             <input type="tel" class="otp-box" maxlength="1" oninput="handleOtp(this, event)">
@@ -60,7 +66,6 @@
             <input type="tel" class="otp-box" maxlength="1" oninput="handleOtp(this, event)">
             <input type="tel" class="otp-box" maxlength="1" oninput="handleOtp(this, event)">
         </div>
-
         <button id="btnLogin" class="btn-primary" onclick="login()">ตกลงเพื่อเข้าสู่ระบบ</button>
     </div>
 
@@ -74,9 +79,8 @@
 
         <div id="stampArea">
             <div id="statusText" style="font-weight: bold; margin-bottom: 5px; color: #10b981;">แต้มปัจจุบัน: 0 / 7</div>
-            <div style="font-size: 12px; color: #64748b; margin-bottom: 15px;">(คลิกที่วงกลมแต่ละฐานเพื่อสแกน QR Code)</div>
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 15px;">(คลิกที่วงกลมฐานที่ยังไม่ผ่านเพื่อสแกน QR Code)</div>
             
-            <!-- เลย์เอาต์วงกลมตามรูปแบบภาพ 2.png -->
             <div class="map-container" id="mapContainer"></div>
             
             <div id="reader"></div>
@@ -101,39 +105,45 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         
-        // ข้อมูลของภาพ 2 แบบ นำ URL ภาพหรือตำแหน่งโฟลเดอร์ในโปรเจกต์มาใส่แทนที่ได้เลย
+        // กำหนดที่อยู่โฟลเดอร์รูปภาพของคุณตรงนี้ได้เลยครับ
         const STATIONS = [
-            { id: 0, name: "Library Playground", qr: "QR_STN_01", imgUnstamped: "url_to_image/2_center.png", imgStamped: "url_to_image/1_center.png" },
-            { id: 1, name: "Discovery Lab", qr: "QR_STN_02", imgUnstamped: "url_to_image/2_top_right.png", imgStamped: "url_to_image/1_top_right.png" },
-            { id: 2, name: "Play Zone", qr: "QR_STN_03", imgUnstamped: "url_to_image/2_bottom_left.png", imgStamped: "url_to_image/1_bottom_left.png" },
-            { id: 3, name: "Treasure Corner", qr: "QR_STN_04", imgUnstamped: "url_to_image/2_top_left.png", imgStamped: "url_to_image/1_top_left.png" },
-            { id: 4, name: "Media Studio", qr: "QR_STN_05", imgUnstamped: "url_to_image/2_top.png", imgStamped: "url_to_image/1_top.png" },
-            { id: 5, name: "Tech Station", qr: "QR_STN_06", imgUnstamped: "url_to_image/2_bottom.png", imgStamped: "url_to_image/1_bottom.png" },
-            { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", imgUnstamped: "url_to_image/2_bottom_right.png", imgStamped: "url_to_image/1_bottom_right.png" }
+            { id: 0, name: "Library Playground", qr: "QR_STN_01", imgUnstamped: "images/2_center.png", imgStamped: "images/1_center.png" },
+            { id: 1, name: "Discovery Lab", qr: "QR_STN_02", imgUnstamped: "images/2_top_right.png", imgStamped: "images/1_top_right.png" },
+            { id: 2, name: "Play Zone", qr: "QR_STN_03", imgUnstamped: "images/2_bottom_left.png", imgStamped: "images/1_bottom_left.png" },
+            { id: 3, name: "Treasure Corner", qr: "QR_STN_04", imgUnstamped: "images/2_top_left.png", imgStamped: "images/1_top_left.png" },
+            { id: 4, name: "Media Studio", qr: "QR_STN_05", imgUnstamped: "images/2_top.png", imgStamped: "images/1_top.png" },
+            { id: 5, name: "Tech Station", qr: "QR_STN_06", imgUnstamped: "images/2_bottom.png", imgStamped: "images/1_bottom.png" },
+            { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", imgUnstamped: "images/2_bottom_right.png", imgStamped: "images/1_bottom_right.png" }
         ];
 
         let currentUserCode = "";
         let html5QrCode;
         let dbRef = null;
-        let activeTargetStation = null; // เก็บค่าว่าตอนนี้กำลังจะสแกนของฐานไหน
+        let activeTargetStation = null;
+        let isScannerInitializing = false;
+        let cancelRequested = false;
 
-        // จัดการเรื่องการพิมพ์ในช่องรหัส 6 ช่อง
+        // จัดการเรื่องการควบคุมช่อง Input รหัส 6 ตัว
         function handleOtp(field, event) {
             field.value = field.value.replace(/[^0-9]/g, '');
-            if (field.value.length === 1 && field.nextElementSibling) {
-                field.nextElementSibling.focus();
+            if (field.value.length >= 1) {
+                field.value = field.value.charAt(0);
+                if (field.nextElementSibling) {
+                    field.nextElementSibling.focus();
+                }
             }
         }
         document.querySelectorAll('.otp-box').forEach((box, index, list) => {
-            box.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && box.value === '') {
-                    if (list[index - 1]) list[index - 1].focus();
+            box.addEventListener('keyup', (e) => {
+                if (e.key === 'Backspace' || e.keyCode === 8) {
+                    if (box.value === '' && list[index - 1]) {
+                        list[index - 1].focus();
+                    }
                 }
             });
         });
 
         async function login() {
-            // รวมค่าจาก input 6 ช่อง
             let input = Array.from(document.querySelectorAll('.otp-box')).map(box => box.value).join('');
             if (input.length !== 6) { alert("กรุณากรอกรหัสให้ครบ 6 หลัก"); return; }
             
@@ -168,44 +178,48 @@
             const mapContainer = document.getElementById('mapContainer');
             mapContainer.innerHTML = ''; 
             let count = 0;
-
             const userStations = userData.stations || Array(7).fill(false);
 
             STATIONS.forEach((st, index) => {
                 const node = document.createElement('div');
                 const isPassed = userStations[index];
                 
-                // ใส่คลาสสำหรับระบุตำแหน่ง (st-0 ถึง st-6)
-                node.className = `station-node st-${index} ${isPassed ? 'stamped' : ''}`;
-                
                 if (isPassed) {
                     count++;
-                    // ถ้าผ่านแล้ว จะดึงรูปภาพแบบภาพที่ 1.png มาแสดง
-                    node.innerHTML = `<img src="${st.imgStamped}" alt="ผ่านแล้ว">`;
+                    node.className = `station-node st-${index} stamped`;
+                    node.innerHTML = `<img src="${st.imgStamped}" alt="${st.name}">`;
                 } else {
-                    // ถ้ายังไม่ผ่าน จะแสดงรูป/โครงร่างของภาพที่ 2.png หรือ ชื่อฐาน 
-                    // ถ้าอัปโหลดรูป 2.png แล้ว สามารถเปิดใช้งานบรรทัดล่างแทนได้เลย
-                    // node.innerHTML = `<img src="${st.imgUnstamped}">`;
-                    node.innerHTML = `<span>${st.name}</span>`;
+                    node.className = `station-node st-${index} unstamped`;
+                    node.innerHTML = `<img src="${st.imgUnstamped}" alt="${st.name}">`;
                     node.onclick = () => openScannerFor(index);
                 }
                 mapContainer.appendChild(node);
             });
 
-            document.getElementById('statusText').innerText = count === 7 ? "🎉 เล่นครบ 7 ฐานแล้ว!" : `แต้มปัจจุบัน: ${count} / 7 ฐาน`;
+            document.getElementById('statusText').innerText = count === 7 ? "🎉 เล่นครบ 7 ฐานแล้ว!" : `ผ่านแล้ว: ${count} / 7 ฐาน`;
             document.getElementById('btnRedeem').disabled = (count < 7);
         }
 
         function openScannerFor(stationIndex) {
-            activeTargetStation = STATIONS[stationIndex];
+            if (isScannerInitializing || (html5QrCode && html5QrCode.isScanning)) return;
             
-            // ซ่อนวงกลมทั้งหมดก่อนเพื่อเปิดพื้นที่ให้กล้อง
+            activeTargetStation = STATIONS[stationIndex];
+            cancelRequested = false;
+            isScannerInitializing = true;
+            
+            // สลับการแสดงผลหน้าจอทันทีกดแล้วไม่ค้างแน่นอน
             document.getElementById('mapContainer').style.display = 'none';
             document.getElementById('reader').style.display = 'block';
             document.getElementById('btnCancel').style.display = 'block';
+            document.getElementById('btnCancel').innerText = "❌ ยกเลิกสแกนกล้อง";
 
-            html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 },
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 230 },
                 async (decodedText) => {
                     if (decodedText.includes(activeTargetStation.qr)) {
                         stopScan();
@@ -214,19 +228,48 @@
                         alert(`❌ QR Code ไม่ถูกต้องสำหรับฐาน ${activeTargetStation.name}`);
                         stopScan(); 
                     }
-                }, (err) => {}
-            ).catch(err => { alert("เปิดกล้องไม่ได้ กรุณาอนุญาตการเข้าถึงกล้อง"); stopScan(); });
+                },
+                (err) => {}
+            ).then(() => {
+                isScannerInitializing = false;
+                // หากผู้ใช้งานกด "ยกเลิก" ระหว่างกล้องกำลังโหลดให้สั่งหยุดสแกนทันที
+                if (cancelRequested) {
+                    stopScan();
+                }
+            }).catch(err => {
+                console.error("Camera error:", err);
+                isScannerInitializing = false;
+                alert("เปิดกล้องไม่ได้ กรุณาตรวจสอบสิทธิ์การใช้งานกล้อง");
+                resetScannerUI();
+            });
         }
 
         function stopScan() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    document.getElementById('reader').style.display = 'none';
-                    document.getElementById('btnCancel').style.display = 'none';
-                    document.getElementById('mapContainer').style.display = 'block'; // แสดงวงกลมกลับมา
-                    activeTargetStation = null;
-                }).catch(e => {});
+            if (isScannerInitializing) {
+                cancelRequested = true;
+                resetScannerUI();
+                return;
             }
+            
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    resetScannerUI();
+                }).catch(e => {
+                    console.error("Stop Scan Error:", e);
+                    resetScannerUI();
+                });
+            } else {
+                resetScannerUI();
+            }
+        }
+
+        function resetScannerUI() {
+            document.getElementById('reader').style.display = 'none';
+            document.getElementById('btnCancel').style.display = 'none';
+            document.getElementById('mapContainer').style.display = 'block';
+            activeTargetStation = null;
+            isScannerInitializing = false;
+            cancelRequested = false;
         }
 
         async function redeemReward() {
@@ -243,7 +286,6 @@
                     dbRef = null;
                 }
                 currentUserCode = "";
-                // ล้างค่าในช่องกรอก 6 ช่อง
                 document.querySelectorAll('.otp-box').forEach(box => box.value = '');
                 document.getElementById('btnLogin').disabled = false;
                 document.getElementById('btnLogin').innerText = "ตกลงเพื่อเข้าสู่ระบบ";
@@ -253,7 +295,6 @@
                 document.getElementById('successBanner').classList.add('hidden');
                 document.getElementById('stampArea').classList.remove('hidden');
             } catch (error) {
-                console.error("Logout Error:", error);
                 location.reload(); 
             }
         }
