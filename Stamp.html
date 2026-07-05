@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบสะสมแต้ม Event</title>
+    <!-- โหลด Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -20,19 +21,57 @@
 
         /* แผนที่วงกลมล็อกตำแหน่งนิ่งสนิทตามภาพอ้างอิง */
         .map-container { position: relative; width: 340px; height: 340px; margin: 20px auto; transform-origin: center; }
-        .station-node { position: absolute; width: 85px; height: 85px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; border: none; background: none; padding: 0; margin: 0; transition: none; }
-        .station-node.unstamped { cursor: pointer; }
-        .station-node.stamped { cursor: default; }
-        .station-node img { width: 100%; height: 100%; object-fit: contain; display: block; }
         
-        /* พิกัดตำแหน่งวงกลมแบบคงที่ ไม่มีการขยับเขยื้อน */
-        .st-0 { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 110px; height: 110px; } /* Library Playground (ตรงกลาง) */
-        .st-4 { top: 0px; left: 50%; transform: translateX(-50%); } /* Media Studio (บน) */
-        .st-1 { top: 45px; right: 0px; } /* Discovery Lab (บนขวา) */
-        .st-6 { bottom: 45px; right: 0px; } /* Safety Checkpoint (ล่างขวา) */
-        .st-5 { bottom: 0px; left: 50%; transform: translateX(-50%); } /* Tech Station (ล่าง) */
-        .st-2 { bottom: 45px; left: 0px; } /* Play Zone (ล่างซ้าย) */
-        .st-3 { top: 45px; left: 0px; } /* Treasure Corner (บนซ้าย) */
+        /* สไตล์หลักของวงกลมแต่ละฐาน */
+        .station-node { 
+            position: absolute; width: 85px; height: 85px; border-radius: 50%; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            text-align: center; font-size: 10px; font-weight: bold; line-height: 1.1;
+            padding: 5px; overflow: hidden; transition: 0.2s;
+        }
+        
+        /* 1) กรณียังไม่ได้สแตมป์ (รอยประสีเทา พื้นหลังสีเทาอ่อน) */
+        .station-node.unstamped { 
+            border: 2px dashed #94a3b8; 
+            background-color: #f8fafc; 
+            color: #475569; 
+            cursor: pointer; 
+        }
+        
+        /* 2) กรณีสแตมป์แล้ว (รอยประสีเขียว พื้นหลังสีเขียวอ่อน) */
+        .station-node.stamped { 
+            border: 2px dashed #10b981; 
+            background-color: #ecfdf5; 
+            color: #047857; 
+            cursor: default; 
+            box-shadow: 0 4px 6px rgba(16,185,129,0.15);
+        }
+
+        /* การจัดวางรูปภาพให้อยู่ด้านหลังข้อความ */
+        .station-node img { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 70%; height: 70%; object-fit: contain; z-index: 1; 
+            opacity: 0.25; /* ให้ภาพจางลงเพื่อให้อ่านตัวหนังสือชัดขึ้น */
+        }
+        .station-node.stamped img {
+            opacity: 0.9; /* สแตมป์แล้วให้รูปชัดขึ้นมา */
+            width: 85%; height: 85%;
+        }
+
+        /* ข้อความชื่อฐานให้อยู่ด้านบนสุดและมีขอบขาวช่วยให้อ่านง่าย */
+        .station-node span { 
+            position: relative; z-index: 2; 
+            text-shadow: 0px 0px 4px rgba(255,255,255,0.95), 0px 0px 2px rgba(255,255,255,1); 
+        }
+        
+        /* พิกัดตำแหน่งวงกลมแบบคงที่ */
+        .st-0 { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 110px; height: 110px; font-size: 12px; } 
+        .st-4 { top: 0px; left: 50%; transform: translateX(-50%); } 
+        .st-1 { top: 45px; right: 0px; } 
+        .st-6 { bottom: 45px; right: 0px; } 
+        .st-5 { bottom: 0px; left: 50%; transform: translateX(-50%); } 
+        .st-2 { bottom: 45px; left: 0px; } 
+        .st-3 { top: 45px; left: 0px; } 
 
         button { padding: 12px 20px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-bottom: 10px; transition: 0.2s; }
         .btn-primary { background-color: #3b82f6; color: white; }
@@ -46,7 +85,6 @@
         .user-info { background-color: #e2e8f0; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #475569; display: inline-block; margin-bottom: 10px; }
         .success-banner { background-color: #fef3c7; border: 2px solid #f59e0b; color: #d97706; padding: 20px; border-radius: 15px; margin: 20px 0; font-size: 18px; font-weight: bold;}
 
-        /* ปรับย่อขนาดแผนที่อัตโนมัติสำหรับหน้าจอมือถือขนาดเล็กมาก */
         @media (max-width: 375px) {
             .otp-box { width: 38px; height: 45px; font-size: 18px; }
             .otp-container { gap: 5px; }
@@ -105,15 +143,15 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         
-        // กำหนดที่อยู่โฟลเดอร์รูปภาพของคุณตรงนี้ได้เลยครับ
+        // กำหนด URL ของรูปภาพใน GitHub ตรงนี้
         const STATIONS = [
-            { id: 0, name: "Library Playground", qr: "QR_STN_01", imgUnstamped: "images/2_center.png", imgStamped: "images/1_center.png" },
-            { id: 1, name: "Discovery Lab", qr: "QR_STN_02", imgUnstamped: "images/2_top_right.png", imgStamped: "images/1_top_right.png" },
-            { id: 2, name: "Play Zone", qr: "QR_STN_03", imgUnstamped: "images/2_bottom_left.png", imgStamped: "images/1_bottom_left.png" },
-            { id: 3, name: "Treasure Corner", qr: "QR_STN_04", imgUnstamped: "images/2_top_left.png", imgStamped: "images/1_top_left.png" },
-            { id: 4, name: "Media Studio", qr: "QR_STN_05", imgUnstamped: "images/2_top.png", imgStamped: "images/1_top.png" },
-            { id: 5, name: "Tech Station", qr: "QR_STN_06", imgUnstamped: "images/2_bottom.png", imgStamped: "images/1_bottom.png" },
-            { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", imgUnstamped: "images/2_bottom_right.png", imgStamped: "images/1_bottom_right.png" }
+            { id: 0, name: "Library Playground", qr: "QR_STN_01", imgUnstamped: "ภาพตอนยังไม่สแกน.webp", imgStamped: "ภาพตอนสแกนแล้ว.webp" },
+            { id: 1, name: "Discovery Lab", qr: "QR_STN_02", imgUnstamped: "ภาพตอนยังไม่สแกน.webp", imgStamped: "ภาพตอนสแกนแล้ว.webp" },
+            { id: 2, name: "Play Zone", qr: "QR_STN_03", imgUnstamped: "ภาพตอนยังไม่สแกน.webp", imgStamped: "ภาพตอนสแกนแล้ว.webp" },
+            { id: 3, name: "Treasure Corner", qr: "QR_STN_04", imgUnstamped: "ภาพตอนยังไม่สแกน.webp", imgStamped: "ภาพตอนสแกนแล้ว.webp" },
+            { id: 4, name: "Media Studio", qr: "QR_STN_05", imgUnstamped: "ภาพตอนยังไม่สแกน.webp", imgStamped: "ภาพตอนสแกนแล้ว.webp" },
+            { id: 5, name: "Tech Station", qr: "QR_STN_06", imgUnstamped: "ภาพตอนยังไม่สแกน.webp", imgStamped: "ภาพตอนสแกนแล้ว.webp" },
+            { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", imgUnstamped: "ภาพตอนยังไม่สแกน.webp", imgStamped: "ภาพตอนสแกนแล้ว.webp" }
         ];
 
         let currentUserCode = "";
@@ -123,7 +161,6 @@
         let isScannerInitializing = false;
         let cancelRequested = false;
 
-        // จัดการเรื่องการควบคุมช่อง Input รหัส 6 ตัว
         function handleOtp(field, event) {
             field.value = field.value.replace(/[^0-9]/g, '');
             if (field.value.length >= 1) {
@@ -187,10 +224,17 @@
                 if (isPassed) {
                     count++;
                     node.className = `station-node st-${index} stamped`;
-                    node.innerHTML = `<img src="${st.imgStamped}" alt="${st.name}">`;
+                    // ใส่รูปและข้อความ โดยให้รูปอยู่ด้านล่างข้อความ
+                    node.innerHTML = `
+                        <img src="${st.imgStamped}" alt="${st.name}">
+                        <span>${st.name}</span>
+                    `;
                 } else {
                     node.className = `station-node st-${index} unstamped`;
-                    node.innerHTML = `<img src="${st.imgUnstamped}" alt="${st.name}">`;
+                    node.innerHTML = `
+                        <img src="${st.imgUnstamped}" alt="${st.name}">
+                        <span>${st.name}</span>
+                    `;
                     node.onclick = () => openScannerFor(index);
                 }
                 mapContainer.appendChild(node);
@@ -207,7 +251,6 @@
             cancelRequested = false;
             isScannerInitializing = true;
             
-            // สลับการแสดงผลหน้าจอทันทีกดแล้วไม่ค้างแน่นอน
             document.getElementById('mapContainer').style.display = 'none';
             document.getElementById('reader').style.display = 'block';
             document.getElementById('btnCancel').style.display = 'block';
@@ -232,12 +275,10 @@
                 (err) => {}
             ).then(() => {
                 isScannerInitializing = false;
-                // หากผู้ใช้งานกด "ยกเลิก" ระหว่างกล้องกำลังโหลดให้สั่งหยุดสแกนทันที
                 if (cancelRequested) {
                     stopScan();
                 }
             }).catch(err => {
-                console.error("Camera error:", err);
                 isScannerInitializing = false;
                 alert("เปิดกล้องไม่ได้ กรุณาตรวจสอบสิทธิ์การใช้งานกล้อง");
                 resetScannerUI();
@@ -255,7 +296,6 @@
                 html5QrCode.stop().then(() => {
                     resetScannerUI();
                 }).catch(e => {
-                    console.error("Stop Scan Error:", e);
                     resetScannerUI();
                 });
             } else {
