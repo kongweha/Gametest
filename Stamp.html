@@ -187,8 +187,6 @@
         let activeTargetStation = null;
         let isScannerInitializing = false;
         let cancelRequested = false;
-        
-        // ตัวแปรเพิ่มสำหรับล็อคการสแกนซ้ำ
         let isProcessingScan = false;
 
         function handleOtp(field, event) {
@@ -222,7 +220,6 @@
                 currentUserCode = input;
                 document.getElementById('displayUserCode').innerText = `รหัสสมาชิก: ${currentUserCode}`;
                 
-                // เก็บเวลาที่ล็อกอินครั้งแรก เพื่อใช้คำนวณเวลาที่ใช้ไป
                 if (!snapshot.val().loginTime) {
                     await db.ref(`users/${currentUserCode}/loginTime`).set(Date.now());
                 }
@@ -232,7 +229,10 @@
                 
                 dbRef = db.ref(`users/${currentUserCode}`);
                 dbRef.on('value', (snap) => {
-                    renderUI(snap.val());
+                    // ป้องกัน Error กรณีข้อมูลว่างเปล่า
+                    if(snap.exists()) {
+                        renderUI(snap.val());
+                    }
                 });
             } else {
                 alert("❌ ไม่พบรหัสนี้ในระบบ");
@@ -242,6 +242,8 @@
         }
 
         function renderUI(userData) {
+            if (!userData) return;
+            
             if (userData.isRedeemed) {
                 document.getElementById('stampArea').classList.add('hidden');
                 document.getElementById('successBanner').classList.remove('hidden');
@@ -251,20 +253,20 @@
             const mapContainer = document.getElementById('mapContainer');
             mapContainer.innerHTML = ''; 
             let count = 0;
-            const userStations = userData.stations || Array(7).fill(false);
+            // รองรับโครงสร้างข้อมูลทั้งแบบ Array และ Object จาก Firebase
+            const userStations = userData.stations || {}; 
 
             STATIONS.forEach((st, index) => {
                 const node = document.createElement('div');
-                const isPassed = userStations[index];
+                // ตรวจสอบค่าให้รัดกุมยิ่งขึ้น
+                const isPassed = userStations[index] === true;
                 
                 if (isPassed) {
                     count++;
                     node.className = `station-node st-${index} stamped`;
-                    // เมื่อสแกนแล้ว ให้แสดงแค่รูปอย่างเดียว ไม่มี span อักษร (และไม่มี onclick)
                     node.innerHTML = `<img src="${st.imgStamped}" alt="${st.name}">`;
                 } else {
                     node.className = `station-node st-${index} unstamped`;
-                    // กรณียังไม่สแกน ให้มีทั้งรูป (จางๆ) และตัวอักษร
                     node.innerHTML = `
                         <img src="${st.imgUnstamped}" alt="${st.name}">
                         <span>${st.name}</span>
@@ -284,7 +286,7 @@
             activeTargetStation = STATIONS[stationIndex];
             cancelRequested = false;
             isScannerInitializing = true;
-            isProcessingScan = false; // ปลดล็อคเมื่อเริ่มสแกนใหม่
+            isProcessingScan = false; 
             
             document.getElementById('mapWrapper').style.display = 'none';
             document.getElementById('reader').style.display = 'block';
@@ -299,29 +301,37 @@
                 { facingMode: "environment" },
                 { fps: 10, qrbox: 230 },
                 async (decodedText) => {
-                    // หากกล้องยิงรหัสเข้ามาซ้ำขณะที่กำลังบันทึก ให้ข้ามไปเลย
                     if (isProcessingScan) return;
 
                     if (decodedText.includes(activeTargetStation.qr)) {
-                        isProcessingScan = true; // ล็อคการสแกนทันที
+                        isProcessingScan = true; 
                         
-                        // ดึงข้อมูลฐานมาเก็บไว้ในตัวแปรชั่วคราวก่อนเพื่อป้องกันบั๊ก
                         const targetId = activeTargetStation.id;
                         const targetName = activeTargetStation.name;
 
-                        stopScan(); // ปิดกล้อง
+                        // สั่งปิดกล้องทันทีเพื่อให้ผู้ใช้ทราบว่าสแกนติดแล้ว
+                        stopScan(); 
 
-                        // เช็คซ้ำในฐานข้อมูลว่าเคยบันทึกไปหรือยัง
-                        const snap = await db.ref(`users/${currentUserCode}/stations/${targetId}`).once('value');
-                        if (!snap.val()) {
-                            // เก็บประวัติเวลาสแกนส่งให้หน้า Admin
-                            const scanData = { id: targetId, name: targetName, time: Date.now() };
-                            await db.ref(`users/${currentUserCode}/scanHistory`).push(scanData);
-                            // อัปเดตสถานะฐานว่าผ่านแล้ว
-                            await db.ref(`users/${currentUserCode}/stations/${targetId}`).set(true);
+                        try {
+                            const snap = await db.ref(`users/${currentUserCode}/stations/${targetId}`).once('value');
+                            if (!snap.val()) {
+                                // 🔴 สำคัญ: สั่งอัปเดตสถานะ "ผ่านฐาน" ก่อนเป็นอันดับแรก เพื่อให้ UI เปลี่ยนสีเขียวทันที
+                                await db.ref(`users/${currentUserCode}/stations/${targetId}`).set(true);
+                                
+                                // 🔴 แยกส่วนการบันทึกประวัติ (History) ไว้ใน try-catch ต่างหาก
+                                // ป้องกันปัญหากรณี Firebase Rules ไม่รองรับ จะได้ไม่ทำให้ระบบหลักพัง
+                                try {
+                                    const scanData = { id: targetId, name: targetName, time: Date.now() };
+                                    await db.ref(`users/${currentUserCode}/scanHistory`).push(scanData);
+                                } catch (historyErr) {
+                                    console.warn("ไม่สามารถบันทึกประวัติ scanHistory ได้:", historyErr);
+                                }
+                            }
+                        } catch (error) {
+                            console.error("Database Connection Error:", error);
                         }
                     } else {
-                        isProcessingScan = true; // ล็อคเพื่อป้องกันแจ้งเตือนรัวๆ
+                        isProcessingScan = true; 
                         alert(`❌ QR Code ไม่ถูกต้องสำหรับฐาน ${activeTargetStation.name}`);
                         stopScan(); 
                     }
@@ -329,9 +339,7 @@
                 (err) => {}
             ).then(() => {
                 isScannerInitializing = false;
-                if (cancelRequested) {
-                    stopScan();
-                }
+                if (cancelRequested) stopScan();
             }).catch(err => {
                 isScannerInitializing = false;
                 alert("เปิดกล้องไม่ได้ กรุณาตรวจสอบสิทธิ์การใช้งานกล้อง");
@@ -369,7 +377,6 @@
 
         async function redeemReward() {
             if (confirm("ต้องการกดแลกของรางวัลใช่หรือไม่? (ไม่สามารถย้อนกลับได้)")) {
-                // เก็บเวลาตอนกดรับของรางวัลส่งให้หน้า Admin
                 await db.ref(`users/${currentUserCode}/redeemTime`).set(Date.now());
                 await db.ref(`users/${currentUserCode}/isRedeemed`).set(true);
             }
