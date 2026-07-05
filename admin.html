@@ -15,10 +15,11 @@
         button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; transition: 0.2s; }
         .btn-primary { background-color: #3b82f6; color: white; }
         .btn-primary:hover { background-color: #2563eb; }
+        .btn-success { background-color: #10b981; color: white; margin-left: 10px; }
+        .btn-success:hover { background-color: #059669; }
         .btn-danger { background-color: #ef4444; color: white; margin-left: 10px; }
         .btn-danger:hover { background-color: #dc2626; }
         
-        /* สไตล์ของแท็บ */
         .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; }
         .tab-btn { padding: 12px 20px; background: #e2e8f0; color: #475569; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; border: none; }
         .tab-btn.active { background: #1e293b; color: white; }
@@ -30,7 +31,6 @@
         .card h3 { margin: 0 0 10px 0; font-size: 14px; color: #64748b; }
         .card .value { font-size: 28px; font-weight: bold; color: #0f172a; }
         
-        /* ช่องกรอง/ค้นหา */
         .filter-group { display: flex; gap: 15px; margin-bottom: 20px; }
         .search-box, .filter-select { padding: 12px 15px; font-size: 15px; border: 2px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; outline: none; }
         .search-box { flex: 1; }
@@ -48,12 +48,10 @@
         .badge.redeemed { background: #bfdbfe; color: #1e40af; }
         .clickable-status { text-decoration: underline; text-underline-offset: 4px; }
 
-        /* Path Styling */
         .path-flow { font-size: 12px; color: #64748b; margin-top: 5px; line-height: 1.6; }
         .path-flow span { background: #f1f5f9; padding: 2px 6px; border-radius: 5px; border: 1px solid #e2e8f0; display: inline-block; margin: 2px 0; }
         .path-arrow { color: #cbd5e1; font-size: 10px; margin: 0 4px; }
         
-        /* Modal ประวัติย่อย */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 500px; position: relative; max-height: 85vh; overflow-y: auto; }
         .close-btn { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #64748b; background: none; border: none; }
@@ -72,6 +70,8 @@
             <h1>⚙️ ระบบจัดการหลังบ้าน (Admin)</h1>
             <div>
                 <button class="btn-primary" onclick="generateAndUploadCodes()">🔄 สร้างรหัส 500 ใบ</button>
+                <!-- เพิ่มฟังก์ชันให้โหลดรหัสไปพิมพ์แจกได้ -->
+                <button class="btn-success" onclick="exportCodesToCSV()">📥 โหลดไฟล์รหัส (CSV)</button>
                 <button class="btn-danger" onclick="clearDatabase()">🗑️ ล้างข้อมูล</button>
             </div>
         </div>
@@ -82,13 +82,11 @@
             <div class="card"><h3>แลกรางวัลแล้ว</h3><div class="value" id="statRedeemed" style="color: #3b82f6;">0</div></div>
         </div>
 
-        <!-- ระบบแท็บ -->
         <div class="tab-menu">
             <button class="tab-btn active" onclick="switchTab('dashboard')">📊 ตารางข้อมูลรวม</button>
             <button class="tab-btn" onclick="switchTab('leaderboard')">🏆 จัดอันดับ & พฤติกรรมเส้นทาง</button>
         </div>
 
-        <!-- TAB 1: Dashboard ภาพรวม -->
         <div id="tab-dashboard" class="tab-content active">
             <div class="filter-group">
                 <input type="text" id="searchDashboard" class="search-box" onkeyup="renderDashboard()" placeholder="🔍 ค้นหารหัสสมาชิก 6 หลัก...">
@@ -109,7 +107,6 @@
             </table>
         </div>
 
-        <!-- TAB 2: Leaderboard & พฤติกรรม -->
         <div id="tab-leaderboard" class="tab-content">
             <div class="filter-group">
                 <select id="filterStartStation" class="filter-select" onchange="renderLeaderboard()">
@@ -140,7 +137,6 @@
         </div>
     </div>
 
-    <!-- Modal ประวัติเวลา -->
     <div id="historyModal" class="modal">
         <div class="modal-content">
             <button class="close-btn" onclick="closeModal()">×</button>
@@ -166,37 +162,56 @@
         
         let globalUsersData = {}; 
 
-        // จัดการแท็บ
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            
             document.getElementById(`tab-${tabId}`).classList.add('active');
             event.target.classList.add('active');
         }
 
         async function generateAndUploadCodes() {
-            if(confirm("การสร้างใหม่จะลบข้อมูลเดิมทั้งหมด ยืนยันหรือไม่?")) {
+            if(confirm("⚠️ คำเตือน: การสร้างใหม่จะลบข้อมูลเก่าทั้งหมด ยืนยันหรือไม่?")) {
                 let codesSet = new Set();
                 while(codesSet.size < 500) {
                     codesSet.add(Math.floor(100000 + Math.random() * 900000).toString());
                 }
                 let updates = {};
                 codesSet.forEach(code => {
-                    updates[code] = { stations: Array(7).fill(false), isRedeemed: false };
+                    // กำหนด Object อย่างชัดเจน เพื่อป้องกัน Firebase Error
+                    updates[code] = { 
+                        stations: {0:false, 1:false, 2:false, 3:false, 4:false, 5:false, 6:false}, 
+                        isRedeemed: false 
+                    };
                 });
                 await db.ref('users').set(updates);
-                alert("สร้างรหัส 6 หลักสำเร็จ!");
+                alert("✅ สร้างรหัสใหม่จำนวน 500 รหัสสำเร็จ! (อย่าลืมกดปุ่ม Export เพื่อนำไปใช้งาน)");
             }
+        }
+
+        // ฟังก์ชัน Export สำหรับดาวน์โหลดรหัสไปปรินต์แจก
+        function exportCodesToCSV() {
+            if(Object.keys(globalUsersData).length === 0) {
+                alert("ยังไม่มีข้อมูลรหัสในระบบ กรุณาสร้างรหัสก่อน"); return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,ลำดับ,รหัสสมาชิก (Code 6 หลัก)\n";
+            let index = 1;
+            Object.keys(globalUsersData).sort().forEach(code => {
+                csvContent += `${index},${code}\n`;
+                index++;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "event_codes.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         async function clearDatabase() {
-            if(confirm("ลบข้อมูลทั้งหมดออกจากระบบ แน่ใจหรือไม่?")) {
-                await db.ref('users').remove();
-            }
+            if(confirm("ลบข้อมูลทั้งหมดออกจากระบบ แน่ใจหรือไม่?")) await db.ref('users').remove();
         }
 
-        // ดึงข้อมูล Realtime
         db.ref('users').on('value', (snapshot) => {
             globalUsersData = snapshot.val() || {};
             
@@ -204,7 +219,8 @@
             Object.keys(globalUsersData).forEach(code => {
                 total++;
                 let user = globalUsersData[code];
-                let passed = user.stations ? user.stations.filter(s => s === true).length : 0;
+                // แปลงข้อมูลแบบเซฟตี้ ป้องกัน Error .filter()
+                let passed = user.stations ? Object.values(user.stations).filter(s => s === true).length : 0;
                 if(passed === 7) completedCount++;
                 if(user.isRedeemed) redeemedCount++;
             });
@@ -217,22 +233,20 @@
             renderLeaderboard();
         });
 
-        // ---------------- TAB 1: เรนเดอร์ตารางภาพรวม (แก้หน่วง + จัดเรียงเลข) ----------------
         function renderDashboard() {
             const tbody = document.getElementById('tableDashboard');
             const searchVal = document.getElementById("searchDashboard").value.trim().toLowerCase();
             
             let htmlContent = '';
             let index = 1;
-
-            // เรียงลำดับรหัสสมาชิก (000000-999999) เสมอ
             const sortedCodes = Object.keys(globalUsersData).sort();
 
             sortedCodes.forEach((code) => {
                 if (searchVal && !code.includes(searchVal)) return;
 
                 const user = globalUsersData[code];
-                const passedStations = user.stations ? user.stations.filter(s => s === true).length : 0;
+                // แปลงข้อมูลแบบเซฟตี้ ป้องกัน Error .filter()
+                const passedStations = user.stations ? Object.values(user.stations).filter(s => s === true).length : 0;
                 
                 let statusClass = passedStations === 0 ? 'none' : (passedStations < 7 ? 'playing' : 'completed');
                 let statusText = passedStations === 0 ? 'ยังไม่เริ่ม' : (passedStations < 7 ? 'กำลังเล่น' : 'ผ่านครบแล้ว');
@@ -249,11 +263,9 @@
                     </tr>
                 `;
             });
-
             tbody.innerHTML = htmlContent || '<tr><td colspan="5" style="text-align: center;">ไม่มีข้อมูล</td></tr>';
         }
 
-        // ---------------- TAB 2: เรนเดอร์ตารางจัดอันดับ (ปรับความเร็ว) ----------------
         function renderLeaderboard() {
             const tbody = document.getElementById('tableLeaderboard');
             const searchVal = document.getElementById("searchLeaderboard").value.trim().toLowerCase();
@@ -261,10 +273,10 @@
 
             let rankedUsers = [];
 
-            // คัดเฉพาะคนที่เล่นครบ 7 ฐาน (และมีประวัติ)
             Object.keys(globalUsersData).forEach(code => {
                 let user = globalUsersData[code];
-                const passedStations = user.stations ? user.stations.filter(s => s === true).length : 0;
+                // แปลงข้อมูลแบบเซฟตี้ ป้องกัน Error .filter()
+                const passedStations = user.stations ? Object.values(user.stations).filter(s => s === true).length : 0;
                 
                 if (passedStations === 7 && user.scanHistory) {
                     let scans = Object.values(user.scanHistory).sort((a,b) => a.time - b.time);
@@ -274,7 +286,6 @@
                 }
             });
 
-            // จัดอันดับตามเวลาที่จบ (จากคนที่สแกนฐานที่ 7 เสร็จเร็วที่สุด หรือเวลากดรับของรางวัล)
             rankedUsers.sort((a, b) => {
                 let timeA = a.user.redeemTime || a.scans[a.scans.length-1].time;
                 let timeB = b.user.redeemTime || b.scans[b.scans.length-1].time;
@@ -312,11 +323,9 @@
                     </tr>
                 `;
             });
-
             tbody.innerHTML = htmlContent || '<tr><td colspan="4" style="text-align: center; padding:20px;">ไม่พบประวัติผู้ที่ผ่านเกณฑ์</td></tr>';
         }
 
-        // ---------------- Helper & Modal ----------------
         function formatTime(ms) { return ms ? new Date(ms).toLocaleTimeString('th-TH') : '-'; }
         
         function getDuration(startMs, endMs) {
