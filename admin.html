@@ -38,7 +38,7 @@
         <div class="action-bar">
             <h1>⚙️ ระบบจัดการหลังบ้าน (Admin)</h1>
             <div>
-                <button class="btn-primary" onclick="generateAndUploadCodes()">🔄 สร้างและอัปโหลด 500 รหัส</button>
+                <button class="btn-primary" onclick="generateAndUploadCodes()">🔄 สร้างและอัปโหลด 500 รหัส (6 หลัก)</button>
                 <button class="btn-danger" onclick="clearDatabase()">🗑️ ล้างฐานข้อมูล</button>
             </div>
         </div>
@@ -68,7 +68,6 @@
     </div>
 
     <script>
-        // 🔑 ใส่ Config ของคุณตรงนี้
         const firebaseConfig = {
           apiKey: "AIzaSyAJlt9qKkkUqPrQL7RLoRAPO-ToYwY7Q2o",
           authDomain: "eventstampcard.firebaseapp.com",
@@ -86,7 +85,8 @@
             if(confirm("การสร้างใหม่จะลบข้อมูลเดิมทั้งหมด ยืนยันหรือไม่?")) {
                 let codesSet = new Set();
                 while(codesSet.size < 500) {
-                    codesSet.add(Math.floor(1000000000 + Math.random() * 9000000000).toString());
+                    // เปลี่ยนการสุ่มตัวเลขจาก 10 หลัก เป็น 6 หลัก
+                    codesSet.add(Math.floor(100000 + Math.random() * 900000).toString());
                 }
 
                 let updates = {};
@@ -99,7 +99,7 @@
 
                 document.getElementById('tableBody').innerHTML = '<tr><td colspan="5">⏳ กำลังอัปโหลดข้อมูล 500 รหัส...</td></tr>';
                 await db.ref('users').set(updates);
-                alert("สร้างและอัปโหลด 500 รหัสสำเร็จ!");
+                alert("สร้างและอัปโหลด 500 รหัส (6 หลัก) สำเร็จ!");
             }
         }
 
