@@ -4,14 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบสะสมแต้ม Event</title>
-    <!-- โหลด Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px; }
-        
         .container { background: white; padding: 25px 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; max-width: 420px; width: 100%; position: relative; }
         
         .otp-container { display: flex; gap: 8px; justify-content: center; margin: 20px 0; }
@@ -21,12 +19,7 @@
         .map-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; margin: 20px 0; overflow: visible; }
         .map-container { position: relative; width: 330px; height: 330px; flex-shrink: 0; }
         
-        .station-node { 
-            position: absolute; width: 85px; height: 85px; border-radius: 50%; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            text-align: center; font-size: 10px; font-weight: bold; line-height: 1.1;
-            padding: 5px; overflow: hidden; transition: 0.2s;
-        }
+        .station-node { position: absolute; width: 85px; height: 85px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 10px; font-weight: bold; line-height: 1.1; padding: 5px; overflow: hidden; transition: 0.2s; }
         
         .station-node.unstamped { border: 2px dashed #94a3b8; background-color: #f8fafc; color: #475569; cursor: pointer; }
         .station-node.stamped { border: 2px dashed #10b981; background-color: #ecfdf5; cursor: default; box-shadow: 0 4px 6px rgba(16,185,129,0.15); }
@@ -114,14 +107,36 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         
+        // แก้ไขให้รูปลงท้าย 2 เป็นภาพจาง(Unstamped) และรูปลงท้าย 1 เป็นภาพสี(Stamped) ทั้งหมดให้ถูกต้อง
         const STATIONS = [
-            { id: 0, name: "Library Playground", qr: "QR_STN_01", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND1.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND2.webp" },
-            { id: 1, name: "Discovery Lab", qr: "QR_STN_02", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB1.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB2.webp" },
-            { id: 2, name: "Play Zone", qr: "QR_STN_03", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE1.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE2.webp" },
-            { id: 3, name: "Treasure Corner", qr: "QR_STN_04", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner1.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner2.webp" },
-            { id: 4, name: "Media Studio", qr: "QR_STN_05", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio1.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio2.webp" },
-            { id: 5, name: "Tech Station", qr: "QR_STN_06", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/8.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/1145405557.webp" },
-            { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint1.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint2.webp" }
+            { id: 0, name: "Library Playground", qr: "QR_STN_01", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND2.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND1.webp" 
+            },
+            { id: 1, name: "Discovery Lab", qr: "QR_STN_02", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB2.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB1.webp" 
+            },
+            { id: 2, name: "Play Zone", qr: "QR_STN_03", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE2.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE1.webp" 
+            },
+            { id: 3, name: "Treasure Corner", qr: "QR_STN_04", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner2.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner1.webp" 
+            },
+            { id: 4, name: "Media Studio", qr: "QR_STN_05", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio2.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio1.webp" 
+            },
+            { id: 5, name: "Tech Station", qr: "QR_STN_06", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/8.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/1145405557.webp" 
+            },
+            { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint2.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint1.webp" 
+            }
         ];
 
         let currentUserCode = "";
@@ -130,15 +145,13 @@
         let activeTargetStation = null;
         let isScannerInitializing = false;
         let cancelRequested = false;
-        let isProcessingScan = false; // ตัวแปรล็อคป้องกันแสกนรัวๆ
+        let isProcessingScan = false;
 
         function handleOtp(field, event) {
             field.value = field.value.replace(/[^0-9]/g, '');
             if (field.value.length >= 1) {
                 field.value = field.value.charAt(0);
-                if (field.nextElementSibling) {
-                    field.nextElementSibling.focus();
-                }
+                if (field.nextElementSibling) field.nextElementSibling.focus();
             }
         }
         document.querySelectorAll('.otp-box').forEach((box, index, list) => {
@@ -220,7 +233,7 @@
             activeTargetStation = STATIONS[stationIndex];
             cancelRequested = false;
             isScannerInitializing = true;
-            isProcessingScan = false; // รีเซ็ตล็อค
+            isProcessingScan = false; 
             
             document.getElementById('mapWrapper').style.display = 'none';
             document.getElementById('reader').style.display = 'block';
@@ -235,14 +248,12 @@
                 { facingMode: "environment" },
                 { fps: 10, qrbox: 230 },
                 async (decodedText) => {
-                    // หากกำลังประมวลผลอยู่แล้ว (เฟรมก่อนหน้าจับได้) ให้ข้ามเฟรมนี้ไปเลย
                     if (isProcessingScan) return; 
 
                     if (decodedText.includes(activeTargetStation.qr)) {
-                        isProcessingScan = true; // ล็อคทันทีไม่ให้ทำซ้ำ
-                        stopScan(); // ปิดกล้องทันที
+                        isProcessingScan = true; 
+                        stopScan(); 
 
-                        // เช็คซ้ำอีกชั้นในฐานข้อมูลว่าเคยสแกนรึยัง เพื่อป้องกันการยิง API ซ้ำ
                         const snap = await db.ref(`users/${currentUserCode}/stations/${activeTargetStation.id}`).once('value');
                         if (!snap.val()) {
                             const scanData = { id: activeTargetStation.id, name: activeTargetStation.name, time: Date.now() };
@@ -250,7 +261,6 @@
                             await db.ref(`users/${currentUserCode}/stations/${activeTargetStation.id}`).set(true);
                         }
                     } else {
-                        // ป้องกันแสกนผิดแล้วแจ้งเตือนรัวๆ
                         isProcessingScan = true;
                         alert(`❌ QR Code ไม่ถูกต้องสำหรับฐาน ${activeTargetStation.name}`);
                         stopScan(); 
