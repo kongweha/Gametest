@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบหลังบ้าน (Admin Dashboard)</title>
-    <!-- โหลด Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <style>
@@ -21,15 +20,33 @@
         .card { background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; text-align: center; }
         .card h3 { margin: 0 0 10px 0; font-size: 14px; color: #64748b; }
         .card .value { font-size: 28px; font-weight: bold; color: #0f172a; }
+        
+        /* ช่องค้นหา */
+        .search-box { width: 100%; padding: 15px; font-size: 16px; border: 2px solid #cbd5e1; border-radius: 10px; margin-bottom: 20px; box-sizing: border-box; transition: 0.2s; }
+        .search-box:focus { border-color: #3b82f6; outline: none; }
+
         table { width: 100%; border-collapse: collapse; background: white; font-size: 14px; }
-        th, td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; text-align: center; }
-        th { background-color: #f8fafc; color: #475569; position: sticky; top: 0; }
-        .badge { padding: 5px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        th, td { padding: 15px; border-bottom: 1px solid #e2e8f0; text-align: center; }
+        th { background-color: #f8fafc; color: #475569; }
+        
+        .badge { padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; cursor: pointer; display: inline-block; transition: 0.2s; }
+        .badge:hover { transform: scale(1.05); }
         .badge.none { background: #e2e8f0; color: #64748b; }
         .badge.playing { background: #fef08a; color: #854d0e; }
         .badge.completed { background: #bbf7d0; color: #166534; }
         .badge.redeemed { background: #bfdbfe; color: #1e40af; }
-        .table-container { max-height: 500px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 10px; }
+        .clickable-status { text-decoration: underline; text-underline-offset: 4px; }
+
+        /* Modal สำหรับดูประวัติ */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 500px; position: relative; max-height: 85vh; overflow-y: auto; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #64748b; background: none; border: none; }
+        .timeline { list-style: none; padding: 0; margin: 20px 0 0 0; }
+        .timeline li { padding-bottom: 15px; border-left: 2px solid #e2e8f0; margin-left: 10px; padding-left: 20px; position: relative; }
+        .timeline li:last-child { border-left: none; }
+        .timeline li::before { content: ''; position: absolute; left: -6px; top: 0; width: 10px; height: 10px; background: #3b82f6; border-radius: 50%; }
+        .timeline-time { font-size: 12px; color: #94a3b8; margin-left: 10px; }
+        .duration-box { font-size: 12px; color: #d97706; background: #fef3c7; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -38,7 +55,7 @@
         <div class="action-bar">
             <h1>⚙️ ระบบจัดการหลังบ้าน (Admin)</h1>
             <div>
-                <button class="btn-primary" onclick="generateAndUploadCodes()">🔄 สร้างและอัปโหลด 500 รหัส (6 หลัก)</button>
+                <button class="btn-primary" onclick="generateAndUploadCodes()">🔄 สร้างและอัปโหลด 500 รหัส</button>
                 <button class="btn-danger" onclick="clearDatabase()">🗑️ ล้างฐานข้อมูล</button>
             </div>
         </div>
@@ -49,6 +66,9 @@
             <div class="card"><h3>แลกรางวัลแล้ว</h3><div class="value" id="statRedeemed" style="color: #3b82f6;">0</div></div>
         </div>
 
+        <!-- ช่องค้นหา -->
+        <input type="text" id="searchInput" class="search-box" onkeyup="filterTable()" placeholder="🔍 ค้นหารหัสสมาชิก 6 หลัก...">
+
         <div class="table-container">
             <table>
                 <thead>
@@ -56,7 +76,7 @@
                         <th style="width: 10%;">ลำดับ</th>
                         <th style="width: 25%;">รหัสสมาชิก</th>
                         <th style="width: 25%;">ฐานที่ผ่าน</th>
-                        <th style="width: 20%;">สถานะ</th>
+                        <th style="width: 20%;">สถานะ (กดเพื่อดูประวัติ)</th>
                         <th style="width: 20%;">การแลกรางวัล</th>
                     </tr>
                 </thead>
@@ -64,6 +84,18 @@
                     <tr><td colspan="5">⏳ กำลังเชื่อมต่อฐานข้อมูล...</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Modal ประวัติเวลา -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()">×</button>
+            <h2 style="margin-top: 0; margin-bottom: 5px;">📜 ประวัติการเล่น</h2>
+            <div id="modalUserCode" style="color: #64748b; font-weight: bold; margin-bottom: 20px;">รหัส: -</div>
+            <ul class="timeline" id="timelineContent">
+                <!-- ข้อมูลประวัติจะถูกสร้างที่นี่ -->
+            </ul>
         </div>
     </div>
 
@@ -80,21 +112,19 @@
         
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        
+        let globalUsersData = {}; // เก็บข้อมูลไว้ดึงตอนกดดูประวัติ
 
         async function generateAndUploadCodes() {
             if(confirm("การสร้างใหม่จะลบข้อมูลเดิมทั้งหมด ยืนยันหรือไม่?")) {
                 let codesSet = new Set();
                 while(codesSet.size < 500) {
-                    // เปลี่ยนการสุ่มตัวเลขจาก 10 หลัก เป็น 6 หลัก
                     codesSet.add(Math.floor(100000 + Math.random() * 900000).toString());
                 }
 
                 let updates = {};
                 codesSet.forEach(code => {
-                    updates[code] = {
-                        stations: Array(7).fill(false),
-                        isRedeemed: false
-                    };
+                    updates[code] = { stations: Array(7).fill(false), isRedeemed: false };
                 });
 
                 document.getElementById('tableBody').innerHTML = '<tr><td colspan="5">⏳ กำลังอัปโหลดข้อมูล 500 รหัส...</td></tr>';
@@ -106,6 +136,19 @@
         async function clearDatabase() {
             if(confirm("ลบข้อมูลทั้งหมดออกจากระบบ แน่ใจหรือไม่?")) {
                 await db.ref('users').remove();
+            }
+        }
+
+        // ฟังก์ชันค้นหาในตาราง
+        function filterTable() {
+            let input = document.getElementById("searchInput").value.toLowerCase();
+            let rows = document.getElementById("tableBody").getElementsByTagName("tr");
+            for (let i = 0; i < rows.length; i++) {
+                let codeCell = rows[i].getElementsByTagName("td")[1];
+                if (codeCell) {
+                    let text = codeCell.textContent || codeCell.innerText;
+                    rows[i].style.display = text.toLowerCase().includes(input) ? "" : "none";
+                }
             }
         }
 
@@ -121,6 +164,7 @@
                 return;
             }
 
+            globalUsersData = data; 
             tbody.innerHTML = '';
             let total = 0, completedCount = 0, redeemedCount = 0;
 
@@ -132,13 +176,22 @@
                 if(passedStations === 7) completedCount++;
                 if(user.isRedeemed) redeemedCount++;
 
-                let statusBadge = passedStations === 0 ? '<span class="badge none">ยังไม่เริ่มเล่น</span>' : 
-                                  passedStations < 7 ? '<span class="badge playing">กำลังเล่น</span>' : 
-                                  '<span class="badge completed">ผ่านครบแล้ว</span>';
+                let statusClass = passedStations === 0 ? 'none' : (passedStations < 7 ? 'playing' : 'completed');
+                let statusText = passedStations === 0 ? 'ยังไม่เริ่มเล่น' : (passedStations < 7 ? 'กำลังเล่น' : 'ผ่านครบแล้ว');
+                
+                // สถานะแบบกดได้
+                let statusBadge = `<span class="badge ${statusClass} clickable-status" onclick="openModal('${code}')">${statusText} 🔍</span>`;
+                
                 let redeemedBadge = user.isRedeemed ? '<span class="badge redeemed">รับแล้ว 🎁</span>' : '<span class="badge none">ยังไม่รับ</span>';
 
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${index + 1}</td><td style="font-family: monospace; font-size: 16px; font-weight: bold; letter-spacing: 1px;">${code}</td><td><b>${passedStations}</b> / 7</td><td>${statusBadge}</td><td>${redeemedBadge}</td>`;
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td style="font-family: monospace; font-size: 18px; font-weight: bold; letter-spacing: 2px;">${code}</td>
+                    <td><b>${passedStations}</b> / 7</td>
+                    <td>${statusBadge}</td>
+                    <td>${redeemedBadge}</td>
+                `;
                 tbody.appendChild(tr);
             });
 
@@ -146,6 +199,70 @@
             document.getElementById('statCompleted').innerText = completedCount;
             document.getElementById('statRedeemed').innerText = redeemedCount;
         });
+
+        // ฟังก์ชันคำนวณระยะเวลา
+        function formatTime(ms) {
+            if(!ms) return '-';
+            return new Date(ms).toLocaleTimeString('th-TH');
+        }
+        function getDuration(startMs, endMs) {
+            if(!startMs || !endMs) return '';
+            let diff = Math.floor((endMs - startMs) / 1000);
+            let m = Math.floor(diff / 60);
+            let s = diff % 60;
+            if(m === 0) return `ใช้เวลา ${s} วินาที`;
+            return `ใช้เวลา ${m} นาที ${s} วินาที`;
+        }
+
+        // จัดการ Modal
+        function openModal(code) {
+            document.getElementById('historyModal').style.display = 'flex';
+            document.getElementById('modalUserCode').innerText = `รหัสสมาชิก: ${code}`;
+            
+            const user = globalUsersData[code];
+            const timeline = document.getElementById('timelineContent');
+            timeline.innerHTML = '';
+
+            if(!user || (!user.loginTime && !user.scanHistory)) {
+                timeline.innerHTML = '<li>ไม่มีประวัติการเล่น (ระบบเก็บเวลาเพิ่งอัปเดต)</li>';
+                return;
+            }
+
+            let lastTime = user.loginTime;
+            
+            // 1. เวลาล็อกอิน
+            if(user.loginTime) {
+                timeline.innerHTML += `<li><b>🔐 เข้าสู่ระบบ</b> <span class="timeline-time">${formatTime(user.loginTime)}</span></li>`;
+            }
+
+            // 2. เวลาแต่ละฐาน
+            if(user.scanHistory) {
+                // แปลง object เป็น array และเรียงตามเวลา
+                const scans = Object.values(user.scanHistory).sort((a, b) => a.time - b.time);
+                
+                scans.forEach((scan, index) => {
+                    let durationHtml = '';
+                    if(lastTime) {
+                        durationHtml = `<br><span class="duration-box">⏱️ ${getDuration(lastTime, scan.time)}</span>`;
+                    }
+                    timeline.innerHTML += `<li><b>📍 ฐาน: ${scan.name}</b> <span class="timeline-time">${formatTime(scan.time)}</span> ${durationHtml}</li>`;
+                    lastTime = scan.time;
+                });
+            }
+
+            // 3. เวลารับรางวัล
+            if(user.isRedeemed && user.redeemTime) {
+                let durationHtml = '';
+                if(lastTime) {
+                    durationHtml = `<br><span class="duration-box">⏱️ ${getDuration(lastTime, user.redeemTime)}</span>`;
+                }
+                timeline.innerHTML += `<li><b>🎁 แลกรับรางวัล</b> <span class="timeline-time">${formatTime(user.redeemTime)}</span> ${durationHtml}</li>`;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
     </script>
 </body>
 </html>
