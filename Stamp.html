@@ -14,13 +14,14 @@
         
         .container { background: white; padding: 25px 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; max-width: 420px; width: 100%; position: relative; }
         
-        /* สไตล์สำหรับกล่องกรอกรหัส 6 ช่องแบบ Responsive */
+        /* สไตล์สำหรับกล่องกรอกรหัส 6 ช่อง */
         .otp-container { display: flex; gap: 8px; justify-content: center; margin: 20px 0; }
         .otp-box { width: 45px; height: 50px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 22px; text-align: center; font-weight: bold; color: #334155; -webkit-appearance: none; }
         .otp-box:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 5px rgba(59,130,246,0.3); }
 
-        /* แผนที่วงกลมล็อกตำแหน่งนิ่งสนิทตามภาพอ้างอิง */
-        .map-container { position: relative; width: 340px; height: 340px; margin: 20px auto; transform-origin: center; }
+        /* ตัวครอบแผนที่ ช่วยบังคับให้อยู่กึ่งกลางเสมอแม้มือถือจอเล็ก */
+        .map-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; margin: 20px 0; overflow: visible; }
+        .map-container { position: relative; width: 330px; height: 330px; flex-shrink: 0; }
         
         /* สไตล์หลักของวงกลมแต่ละฐาน */
         .station-node { 
@@ -30,7 +31,7 @@
             padding: 5px; overflow: hidden; transition: 0.2s;
         }
         
-        /* 1) กรณียังไม่ได้สแตมป์ (รอยประสีเทา พื้นหลังสีเทาอ่อน) */
+        /* 1) กรณียังไม่ได้สแตมป์ (รอยประสีเทา) */
         .station-node.unstamped { 
             border: 2px dashed #94a3b8; 
             background-color: #f8fafc; 
@@ -38,11 +39,10 @@
             cursor: pointer; 
         }
         
-        /* 2) กรณีสแตมป์แล้ว (รอยประสีเขียว พื้นหลังสีเขียวอ่อน) */
+        /* 2) กรณีสแตมป์แล้ว (รอยประสีเขียว) */
         .station-node.stamped { 
             border: 2px dashed #10b981; 
             background-color: #ecfdf5; 
-            color: #047857; 
             cursor: default; 
             box-shadow: 0 4px 6px rgba(16,185,129,0.15);
         }
@@ -51,20 +51,22 @@
         .station-node img { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 70%; height: 70%; object-fit: contain; z-index: 1; 
-            opacity: 0.25; /* ให้ภาพจางลงเพื่อให้อ่านตัวหนังสือชัดขึ้น */
+            opacity: 0.25; /* ตอนยังไม่สแตมป์ให้ภาพจาง */
         }
+        
+        /* ตอนสแตมป์แล้วให้รูปแสดง 100% และใหญ่ขึ้นเพราะไม่มีข้อความบัง */
         .station-node.stamped img {
-            opacity: 0.9; /* สแตมป์แล้วให้รูปชัดขึ้นมา */
-            width: 85%; height: 85%;
+            opacity: 1; 
+            width: 90%; height: 90%;
         }
 
-        /* ข้อความชื่อฐานให้อยู่ด้านบนสุดและมีขอบขาวช่วยให้อ่านง่าย */
+        /* ข้อความชื่อฐาน (ใช้เฉพาะตอนยังไม่สแตมป์) */
         .station-node span { 
             position: relative; z-index: 2; 
             text-shadow: 0px 0px 4px rgba(255,255,255,0.95), 0px 0px 2px rgba(255,255,255,1); 
         }
         
-        /* พิกัดตำแหน่งวงกลมแบบคงที่ */
+        /* พิกัดตำแหน่งวงกลม */
         .st-0 { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 110px; height: 110px; font-size: 12px; } 
         .st-4 { top: 0px; left: 50%; transform: translateX(-50%); } 
         .st-1 { top: 45px; right: 0px; } 
@@ -85,10 +87,11 @@
         .user-info { background-color: #e2e8f0; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #475569; display: inline-block; margin-bottom: 10px; }
         .success-banner { background-color: #fef3c7; border: 2px solid #f59e0b; color: #d97706; padding: 20px; border-radius: 15px; margin: 20px 0; font-size: 18px; font-weight: bold;}
 
-        @media (max-width: 375px) {
+        /* ย่อส่วนแผนที่ลงเล็กน้อยสำหรับมือถือรุ่นเก่ามาก */
+        @media (max-width: 360px) {
             .otp-box { width: 38px; height: 45px; font-size: 18px; }
             .otp-container { gap: 5px; }
-            .map-container { transform: scale(0.85); margin: -15px auto; }
+            .map-container { transform: scale(0.9); }
         }
     </style>
 </head>
@@ -117,9 +120,12 @@
 
         <div id="stampArea">
             <div id="statusText" style="font-weight: bold; margin-bottom: 5px; color: #10b981;">แต้มปัจจุบัน: 0 / 7</div>
-            <div style="font-size: 12px; color: #64748b; margin-bottom: 15px;">(คลิกที่วงกลมฐานที่ยังไม่ผ่านเพื่อสแกน QR Code)</div>
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">(คลิกที่วงกลมฐานที่ยังไม่ผ่านเพื่อสแกน QR Code)</div>
             
-            <div class="map-container" id="mapContainer"></div>
+            <!-- เพิ่ม Wrapper จัดกึ่งกลาง -->
+            <div class="map-wrapper" id="mapWrapper">
+                <div class="map-container" id="mapContainer"></div>
+            </div>
             
             <div id="reader"></div>
             <button id="btnCancel" class="btn-cancel" onclick="stopScan()">❌ ยกเลิกสแกนกล้อง</button>
@@ -143,15 +149,36 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         
-        // กำหนด URL ของรูปภาพใน GitHub ตรงนี้
+        // ข้อมูลฐาน สลับรูป unstamped/stamped แล้วสำหรับฐานที่ 1-6
         const STATIONS = [
-            { id: 0, name: "Library Playground", qr: "QR_STN_01", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND2.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND1.webp" },
-            { id: 1, name: "Discovery Lab", qr: "QR_STN_02", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB2.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB1.webp" },
-            { id: 2, name: "Play Zone", qr: "QR_STN_03", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE2.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE1.webp" },
-            { id: 3, name: "Treasure Corner", qr: "QR_STN_04", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner2.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner1.webp" },
-            { id: 4, name: "Media Studio", qr: "QR_STN_05", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio2.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio1.webp" },
-            { id: 5, name: "Tech Station", qr: "QR_STN_06", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/8.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/1145405557.webp" },
-            { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint2.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint1.webp" }
+            { id: 0, name: "Library Playground", qr: "QR_STN_01", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND2.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND1.webp" 
+            },
+            { id: 1, name: "Discovery Lab", qr: "QR_STN_02", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB2.webp" 
+            },
+            { id: 2, name: "Play Zone", qr: "QR_STN_03", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE2.webp" 
+            },
+            { id: 3, name: "Treasure Corner", qr: "QR_STN_04", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner2.webp" 
+            },
+            { id: 4, name: "Media Studio", qr: "QR_STN_05", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio2.webp" 
+            },
+            { id: 5, name: "Tech Station", qr: "QR_STN_06", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/1145405557.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/8.webp" 
+            },
+            { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint2.webp" 
+            }
         ];
 
         let currentUserCode = "";
@@ -224,13 +251,11 @@
                 if (isPassed) {
                     count++;
                     node.className = `station-node st-${index} stamped`;
-                    // ใส่รูปและข้อความ โดยให้รูปอยู่ด้านล่างข้อความ
-                    node.innerHTML = `
-                        <img src="${st.imgStamped}" alt="${st.name}">
-                        <span>${st.name}</span>
-                    `;
+                    // เมื่อสแกนแล้ว ให้แสดงแค่รูปอย่างเดียว ไม่มี span อักษร
+                    node.innerHTML = `<img src="${st.imgStamped}" alt="${st.name}">`;
                 } else {
                     node.className = `station-node st-${index} unstamped`;
+                    // กรณียังไม่สแกน ให้มีทั้งรูป (จางๆ) และตัวอักษร
                     node.innerHTML = `
                         <img src="${st.imgUnstamped}" alt="${st.name}">
                         <span>${st.name}</span>
@@ -251,7 +276,7 @@
             cancelRequested = false;
             isScannerInitializing = true;
             
-            document.getElementById('mapContainer').style.display = 'none';
+            document.getElementById('mapWrapper').style.display = 'none';
             document.getElementById('reader').style.display = 'block';
             document.getElementById('btnCancel').style.display = 'block';
             document.getElementById('btnCancel').innerText = "❌ ยกเลิกสแกนกล้อง";
@@ -306,7 +331,7 @@
         function resetScannerUI() {
             document.getElementById('reader').style.display = 'none';
             document.getElementById('btnCancel').style.display = 'none';
-            document.getElementById('mapContainer').style.display = 'block';
+            document.getElementById('mapWrapper').style.display = 'flex';
             activeTargetStation = null;
             isScannerInitializing = false;
             cancelRequested = false;
