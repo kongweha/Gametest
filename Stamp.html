@@ -220,6 +220,13 @@
             if (snapshot.exists()) {
                 currentUserCode = input;
                 document.getElementById('displayUserCode').innerText = `รหัสสมาชิก: ${currentUserCode}`;
+                
+                // --- เพิ่มโค้ดเก็บเวลาล็อกอินครั้งแรก ---
+                if (!snapshot.val().loginTime) {
+                    await db.ref(`users/${currentUserCode}/loginTime`).set(Date.now());
+                }
+                // ----------------------------------------
+
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('stampScreen').classList.remove('hidden');
                 
@@ -293,6 +300,12 @@
                 async (decodedText) => {
                     if (decodedText.includes(activeTargetStation.qr)) {
                         stopScan();
+
+                        // --- เพิ่มโค้ดเก็บประวัติฐานและเวลาที่สแกน ---
+                        const scanData = { id: activeTargetStation.id, name: activeTargetStation.name, time: Date.now() };
+                        await db.ref(`users/${currentUserCode}/scanHistory`).push(scanData);
+                        // ---------------------------------------------
+
                         await db.ref(`users/${currentUserCode}/stations/${activeTargetStation.id}`).set(true);
                     } else {
                         alert(`❌ QR Code ไม่ถูกต้องสำหรับฐาน ${activeTargetStation.name}`);
@@ -341,6 +354,11 @@
 
         async function redeemReward() {
             if (confirm("ต้องการกดแลกของรางวัลใช่หรือไม่? (ไม่สามารถย้อนกลับได้)")) {
+                
+                // --- เพิ่มโค้ดเก็บเวลารับของ ---
+                await db.ref(`users/${currentUserCode}/redeemTime`).set(Date.now());
+                // -----------------------------
+
                 await db.ref(`users/${currentUserCode}/isRedeemed`).set(true);
             }
         }
