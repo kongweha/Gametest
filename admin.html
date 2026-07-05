@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบหลังบ้าน (Admin Dashboard)</title>
-    <!-- โหลด Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <style>
@@ -114,7 +113,7 @@
         <div id="tab-leaderboard" class="tab-content">
             <div class="filter-group">
                 <select id="filterStartStation" class="filter-select" onchange="renderLeaderboard()">
-                    <option value="all">--- กรอง: เริ่มเล่นจากฐานใดก็ได้ ---</option>
+                    <option value="all">แสดงทั้งหมด (ไม่กรองลำดับการเล่น)</option>
                     <option value="0">เริ่มเล่นที่: Library Playground</option>
                     <option value="1">เริ่มเล่นที่: Discovery Lab</option>
                     <option value="2">เริ่มเล่นที่: Play Zone</option>
@@ -197,7 +196,7 @@
             }
         }
 
-        // ดึงข้อมูล Realtime ครั้งเดียว แล้วกระจายไป 2 ฟังก์ชันเรนเดอร์
+        // ดึงข้อมูล Realtime
         db.ref('users').on('value', (snapshot) => {
             globalUsersData = snapshot.val() || {};
             
@@ -218,14 +217,18 @@
             renderLeaderboard();
         });
 
-        // ---------------- TAB 1: เรนเดอร์ตารางภาพรวม ----------------
+        // ---------------- TAB 1: เรนเดอร์ตารางภาพรวม (แก้หน่วง + จัดเรียงเลข) ----------------
         function renderDashboard() {
             const tbody = document.getElementById('tableDashboard');
-            const searchVal = document.getElementById("searchDashboard").value.toLowerCase();
-            tbody.innerHTML = '';
+            const searchVal = document.getElementById("searchDashboard").value.trim().toLowerCase();
             
+            let htmlContent = '';
             let index = 1;
-            Object.keys(globalUsersData).forEach((code) => {
+
+            // เรียงลำดับรหัสสมาชิก (000000-999999) เสมอ
+            const sortedCodes = Object.keys(globalUsersData).sort();
+
+            sortedCodes.forEach((code) => {
                 if (searchVal && !code.includes(searchVal)) return;
 
                 const user = globalUsersData[code];
@@ -236,7 +239,7 @@
                 let statusBadge = `<span class="badge ${statusClass} clickable-status" onclick="openModal('${code}')">${statusText} 🔍</span>`;
                 let redeemedBadge = user.isRedeemed ? '<span class="badge redeemed">รับแล้ว 🎁</span>' : '<span class="badge none">-</span>';
 
-                tbody.innerHTML += `
+                htmlContent += `
                     <tr>
                         <td style="text-align: center;">${index++}</td>
                         <td style="font-family: monospace; font-size: 18px; font-weight: bold; letter-spacing: 1px;">${code}</td>
@@ -246,15 +249,15 @@
                     </tr>
                 `;
             });
-            if(tbody.innerHTML === '') tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">ไม่มีข้อมูล</td></tr>';
+
+            tbody.innerHTML = htmlContent || '<tr><td colspan="5" style="text-align: center;">ไม่มีข้อมูล</td></tr>';
         }
 
-        // ---------------- TAB 2: เรนเดอร์ตารางจัดอันดับ ----------------
+        // ---------------- TAB 2: เรนเดอร์ตารางจัดอันดับ (ปรับความเร็ว) ----------------
         function renderLeaderboard() {
             const tbody = document.getElementById('tableLeaderboard');
-            const searchVal = document.getElementById("searchLeaderboard").value.toLowerCase();
+            const searchVal = document.getElementById("searchLeaderboard").value.trim().toLowerCase();
             const filterStart = document.getElementById("filterStartStation").value;
-            tbody.innerHTML = '';
 
             let rankedUsers = [];
 
@@ -275,24 +278,24 @@
             rankedUsers.sort((a, b) => {
                 let timeA = a.user.redeemTime || a.scans[a.scans.length-1].time;
                 let timeB = b.user.redeemTime || b.scans[b.scans.length-1].time;
-                return timeA - timeB; // น้อยไปมาก (เสร็จก่อนขึ้นบน)
+                return timeA - timeB; 
             });
 
+            let htmlContent = '';
             let rank = 1;
+            
             rankedUsers.forEach((item) => {
                 if (searchVal && !item.code.includes(searchVal)) return;
 
                 let firstStationId = item.scans[0].id.toString();
                 if (filterStart !== "all" && firstStationId !== filterStart) return;
 
-                // คำนวณเวลาที่ใช้ทั้งหมด (เวลาฐานสุดท้าย - เวลาล็อกอิน)
                 let totalTimeText = "-";
                 if(item.user.loginTime) {
                     let endTime = item.user.redeemTime || item.scans[item.scans.length-1].time;
                     totalTimeText = getDuration(item.user.loginTime, endTime);
                 }
 
-                // สร้างดีไซน์ลำดับ Path
                 let pathHtml = `<div class="path-flow">`;
                 item.scans.forEach((scan, i) => {
                     pathHtml += `<span>${scan.name}</span>`;
@@ -300,7 +303,7 @@
                 });
                 pathHtml += `</div>`;
 
-                tbody.innerHTML += `
+                htmlContent += `
                     <tr>
                         <td style="text-align: center; font-size: 18px; font-weight: bold; color: #d97706;">#${rank++}</td>
                         <td style="font-family: monospace; font-size: 18px; font-weight: bold;">${item.code}</td>
@@ -310,7 +313,7 @@
                 `;
             });
 
-            if(tbody.innerHTML === '') tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding:20px;">ไม่พบประวัติผู้ที่ผ่านเกณฑ์</td></tr>';
+            tbody.innerHTML = htmlContent || '<tr><td colspan="4" style="text-align: center; padding:20px;">ไม่พบประวัติผู้ที่ผ่านเกณฑ์</td></tr>';
         }
 
         // ---------------- Helper & Modal ----------------
