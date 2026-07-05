@@ -304,16 +304,21 @@
 
                     if (decodedText.includes(activeTargetStation.qr)) {
                         isProcessingScan = true; // ล็อคการสแกนทันที
+                        
+                        // ดึงข้อมูลฐานมาเก็บไว้ในตัวแปรชั่วคราวก่อนเพื่อป้องกันบั๊ก
+                        const targetId = activeTargetStation.id;
+                        const targetName = activeTargetStation.name;
+
                         stopScan(); // ปิดกล้อง
 
                         // เช็คซ้ำในฐานข้อมูลว่าเคยบันทึกไปหรือยัง
-                        const snap = await db.ref(`users/${currentUserCode}/stations/${activeTargetStation.id}`).once('value');
+                        const snap = await db.ref(`users/${currentUserCode}/stations/${targetId}`).once('value');
                         if (!snap.val()) {
                             // เก็บประวัติเวลาสแกนส่งให้หน้า Admin
-                            const scanData = { id: activeTargetStation.id, name: activeTargetStation.name, time: Date.now() };
+                            const scanData = { id: targetId, name: targetName, time: Date.now() };
                             await db.ref(`users/${currentUserCode}/scanHistory`).push(scanData);
                             // อัปเดตสถานะฐานว่าผ่านแล้ว
-                            await db.ref(`users/${currentUserCode}/stations/${activeTargetStation.id}`).set(true);
+                            await db.ref(`users/${currentUserCode}/stations/${targetId}`).set(true);
                         }
                     } else {
                         isProcessingScan = true; // ล็อคเพื่อป้องกันแจ้งเตือนรัวๆ
