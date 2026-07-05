@@ -151,33 +151,35 @@
         
         // ข้อมูลฐาน ทำการสลับลิงก์ unstamped กับ stamped ใหม่ทั้งหมด
         const STATIONS = [
+            // ID 0 ไม่สลับ (คงเดิมตามที่คุณกำหนด)
             { id: 0, name: "Library Playground", qr: "QR_STN_01", 
               imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND1.webp", 
               imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND2.webp" 
             },
+            // ID 1-6 สลับลิงก์ภาพแล้ว
             { id: 1, name: "Discovery Lab", qr: "QR_STN_02", 
-              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB2.webp", 
-              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB1.webp" 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB2.webp" 
             },
             { id: 2, name: "Play Zone", qr: "QR_STN_03", 
-              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE2.webp", 
-              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE1.webp" 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE2.webp" 
             },
             { id: 3, name: "Treasure Corner", qr: "QR_STN_04", 
-              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner2.webp", 
-              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner1.webp" 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner2.webp" 
             },
             { id: 4, name: "Media Studio", qr: "QR_STN_05", 
-              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio2.webp", 
-              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio1.webp" 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio2.webp" 
             },
             { id: 5, name: "Tech Station", qr: "QR_STN_06", 
               imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/8.webp", 
               imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/1145405557.webp" 
             },
             { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", 
-              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint2.webp", 
-              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint1.webp" 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint2.webp" 
             }
         ];
 
