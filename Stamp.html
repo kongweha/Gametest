@@ -19,23 +19,26 @@
         .otp-box { width: 45px; height: 50px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 22px; text-align: center; font-weight: bold; color: #334155; -webkit-appearance: none; }
         .otp-box:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 5px rgba(59,130,246,0.3); }
 
+        /* ตัวครอบแผนที่ ช่วยบังคับให้อยู่กึ่งกลางเสมอแม้มือถือจอเล็ก */
         .map-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; margin: 20px 0; overflow: visible; }
         .map-container { position: relative; width: 330px; height: 330px; flex-shrink: 0; }
         
+        /* สไตล์หลักของวงกลมแต่ละฐาน */
         .station-node { 
             position: absolute; width: 85px; height: 85px; border-radius: 50%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             text-align: center; font-size: 10px; font-weight: bold; line-height: 1.1;
-            padding: 5px; overflow: hidden; transition: 0.2s;
+            padding: 5px; overflow: hidden; transition: 0.3s ease;
         }
         
         .station-node.unstamped { border: 2px dashed #94a3b8; background-color: #f8fafc; color: #475569; cursor: pointer; }
-        .station-node.stamped { border: 2px dashed #10b981; background-color: #ecfdf5; cursor: default; box-shadow: 0 4px 6px rgba(16,185,129,0.15); }
+        .station-node.stamped { border: 2px dashed #10b981; background-color: #ecfdf5; cursor: pointer; box-shadow: 0 4px 6px rgba(16,185,129,0.15); }
         .station-node img { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; object-fit: contain; z-index: 1; opacity: 0.25; }
         .station-node.stamped img { opacity: 1; width: 90%; height: 90%; }
         .station-node span { position: relative; z-index: 2; text-shadow: 0px 0px 4px rgba(255,255,255,0.95), 0px 0px 2px rgba(255,255,255,1); }
         
-        .st-0 { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 110px; height: 110px; font-size: 12px; } 
+        /* พิกัดตำแหน่งวงกลม */
+        .st-0 { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 110px; height: 110px; font-size: 12px; z-index: 10; box-shadow: 0 0 10px rgba(0,0,0,0.1); } 
         .st-4 { top: 0px; left: 50%; transform: translateX(-50%); } 
         .st-1 { top: 45px; right: 0px; } 
         .st-6 { bottom: 45px; right: 0px; } 
@@ -45,6 +48,7 @@
 
         button { padding: 12px 20px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-bottom: 10px; transition: 0.2s; }
         .btn-primary { background-color: #3b82f6; color: white; }
+        .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; }
         .btn-redeem { background-color: #ef4444; color: white; margin-top: 15px;}
         .btn-redeem:disabled { background-color: #fca5a5; cursor: not-allowed; }
         .btn-cancel { background-color: #64748b; color: white; display: none; margin-top: 10px; }
@@ -55,6 +59,18 @@
         .user-info { background-color: #e2e8f0; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #475569; display: inline-block; margin-bottom: 10px; }
         .success-banner { background-color: #fef3c7; border: 2px solid #f59e0b; color: #d97706; padding: 20px; border-radius: 15px; margin: 20px 0; font-size: 18px; font-weight: bold;}
 
+        /* สไตล์สำหรับกล่องเนื้อหาที่ซ่อนไว้ */
+        .content-box { background-color: #f0f9ff; border: 2px solid #bae6fd; color: #0369a1; padding: 15px; border-radius: 15px; margin-bottom: 15px; text-align: left; font-size: 14px; animation: fadeIn 0.3s ease; }
+        .content-box h3 { margin-top: 0; color: #0284c7; margin-bottom: 8px; font-size: 16px;}
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* สไตล์สำหรับกล่อง Rating */
+        .rating-box { background-color: #fffbeb; border: 2px solid #fcd34d; padding: 20px; border-radius: 15px; margin: 15px 0; text-align: center; animation: fadeIn 0.3s ease; }
+        .stars { display: flex; justify-content: center; gap: 10px; font-size: 35px; margin: 15px 0; cursor: pointer; color: #e2e8f0; }
+        .stars span { transition: color 0.2s; }
+        .stars span.active { color: #f59e0b; }
+        .display-stars { font-size: 14px; color: #d97706; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #bae6fd; font-weight: bold; }
+
         @media (max-width: 360px) {
             .otp-box { width: 38px; height: 45px; font-size: 18px; }
             .otp-container { gap: 5px; }
@@ -64,19 +80,21 @@
 </head>
 <body>
 
+    <!-- หน้าต่าง Login -->
     <div class="container" id="loginScreen">
         <h2>🔐 เข้าสู่ระบบสะสมแต้ม</h2>
         <div class="otp-container" id="otpGroup">
-            <input type="tel" class="otp-box" maxlength="1" oninput="handleOtp(this, event)">
-            <input type="tel" class="otp-box" maxlength="1" oninput="handleOtp(this, event)">
-            <input type="tel" class="otp-box" maxlength="1" oninput="handleOtp(this, event)">
-            <input type="tel" class="otp-box" maxlength="1" oninput="handleOtp(this, event)">
-            <input type="tel" class="otp-box" maxlength="1" oninput="handleOtp(this, event)">
-            <input type="tel" class="otp-box" maxlength="1" oninput="handleOtp(this, event)">
+            <input type="tel" class="otp-box" maxlength="1">
+            <input type="tel" class="otp-box" maxlength="1">
+            <input type="tel" class="otp-box" maxlength="1">
+            <input type="tel" class="otp-box" maxlength="1">
+            <input type="tel" class="otp-box" maxlength="1">
+            <input type="tel" class="otp-box" maxlength="1">
         </div>
         <button id="btnLogin" class="btn-primary" onclick="login()">ตกลงเพื่อเข้าสู่ระบบ</button>
     </div>
 
+    <!-- หน้าต่างสแกนสะสมแต้ม -->
     <div class="container hidden" id="stampScreen">
         <h2>🎉 บัตรสะสมแต้ม</h2>
         <div class="user-info" id="displayUserCode">รหัสสมาชิก: XXXXXX</div>
@@ -87,12 +105,29 @@
 
         <div id="stampArea">
             <div id="statusText" style="font-weight: bold; margin-bottom: 5px; color: #10b981;">แต้มปัจจุบัน: 0 / 7</div>
-            <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">(คลิกที่วงกลมฐานที่ยังไม่ผ่านเพื่อสแกน QR Code)</div>
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;" id="subStatusText">(คลิกที่วงกลมฐานที่ยังไม่ผ่านเพื่อสแกน QR Code)</div>
             
+            <!-- กล่องให้คะแนน (ซ่อนไว้ตอนแรก) -->
+            <div id="ratingBox" class="rating-box hidden">
+                <h3 style="margin-top:0; color: #b45309;">⭐ ประเมินความพึงพอใจฐานนี้</h3>
+                <div id="ratingTitle" style="font-weight: bold; color: #92400e;"></div>
+                <div class="stars" id="starContainer">
+                    <span data-value="1">★</span>
+                    <span data-value="2">★</span>
+                    <span data-value="3">★</span>
+                    <span data-value="4">★</span>
+                    <span data-value="5">★</span>
+                </div>
+                <button id="btnSubmitRating" class="btn-primary" disabled onclick="submitRating()">ยืนยันให้คะแนน</button>
+            </div>
+
             <div class="map-wrapper" id="mapWrapper">
                 <div class="map-container" id="mapContainer"></div>
             </div>
             
+            <!-- กล่องแสดงเนื้อหาเมื่อกดที่ฐานสีเขียว -->
+            <div id="contentBox" class="content-box hidden"></div>
+
             <div id="reader"></div>
             <button id="btnCancel" class="btn-cancel" onclick="stopScan()">❌ ยกเลิกสแกนกล้อง</button>
             <button id="btnRedeem" class="btn-redeem" onclick="redeemReward()" disabled>🎁 แลกของรางวัล (ต้องครบ 7 ฐาน)</button>
@@ -102,6 +137,7 @@
     </div>
 
     <script>
+        // ตั้งค่า Firebase
         const firebaseConfig = {
           apiKey: "AIzaSyAJlt9qKkkUqPrQL7RLoRAPO-ToYwY7Q2o",
           authDomain: "eventstampcard.firebaseapp.com",
@@ -111,18 +147,46 @@
           messagingSenderId: "1072393228911",
           appId: "1:1072393228911:web:66f14d85a50749e7b9b39a"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         
+        // ข้อมูลฐาน
         const STATIONS = [
-            { id: 0, name: "Library Playground", qr: "QR_STN_01", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND1.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND2.webp" },
-            { id: 1, name: "Discovery Lab", qr: "QR_STN_02", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB1.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB2.webp" },
-            { id: 2, name: "Play Zone", qr: "QR_STN_03", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE1.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE2.webp" },
-            { id: 3, name: "Treasure Corner", qr: "QR_STN_04", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner1.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner2.webp" },
-            { id: 4, name: "Media Studio", qr: "QR_STN_05", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio1.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio2.webp" },
-            { id: 5, name: "Tech Station", qr: "QR_STN_06", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/8.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/1145405557.webp" },
-            { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint1.webp", imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint2.webp" }
+            { id: 0, name: "Library Playground", qr: "QR_STN_01", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/LIBRARY%20PLAYGROUND2.webp",
+              content: "ยินดีต้อนรับสู่พื้นที่สำหรับทำกิจกรรมและพักผ่อน! พื้นที่นี้ออกแบบมาเพื่อให้คุณได้สนุกกับการเรียนรู้ในรูปแบบใหม่"
+            },
+            { id: 1, name: "Discovery Lab", qr: "QR_STN_02", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Discovery%20LAB2.webp",
+              content: "ค้นพบไอเดียใหม่ๆ ที่ Discovery Lab เรามีเครื่องมือและทรัพยากรที่พร้อมช่วยให้คุณต่อยอดความคิดสร้างสรรค์ได้ไม่รู้จบ"
+            },
+            { id: 2, name: "Play Zone", qr: "QR_STN_03", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Play%20ZONE2.webp",
+              content: "ถึงเวลาคลายเครียด! โซนนี้เปิดโอกาสให้คุณผ่อนคลายจากการอ่านหนังสือหนักๆ ด้วยเกมและกิจกรรมที่น่าสนใจมากมาย"
+            },
+            { id: 3, name: "Treasure Corner", qr: "QR_STN_04", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Treasure%20corner2.webp",
+              content: "ขุมทรัพย์ความรู้! มุมนี้รวบรวมหนังสือและสื่อหายากที่คุณอาจไม่เคยรู้มาก่อนว่ามีอยู่ในห้องสมุดของเรา"
+            },
+            { id: 4, name: "Media Studio", qr: "QR_STN_05", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Media%20studio2.webp",
+              content: "จุดประกายความเป็นนักสร้างสรรค์กับสตูดิโอสื่อครบวงจร ไม่ว่าจะอัดเสียง ถ่ายวิดีโอ หรือตัดต่อ ก็ทำได้ที่นี่!"
+            },
+            { id: 5, name: "Tech Station", qr: "QR_STN_06", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/8.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/1145405557.webp",
+              content: "อัปเดตเทรนด์เทคโนโลยีใหม่ๆ แวะมาทดลองใช้งานอุปกรณ์สุดล้ำที่เราจัดเตรียมไว้ให้คุณสัมผัสด้วยตัวเอง"
+            },
+            { id: 6, name: "Safety Checkpoint", qr: "QR_STN_07", 
+              imgUnstamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint1.webp", 
+              imgStamped: "https://cdn.jsdelivr.net/gh/kongweha/Gametest@e1caf09903b8480a94b9baf8497f1d3302eed795/picture/Safety%20Checkpoint2.webp",
+              content: "ความปลอดภัยคือสิ่งสำคัญ เรียนรู้วิธีการดูแลรักษาพื้นที่ส่วนรวมและการปฏิบัติตามกฎเพื่อความเรียบร้อย"
+            }
         ];
 
         let currentUserCode = "";
@@ -132,52 +196,121 @@
         let isScannerInitializing = false;
         let cancelRequested = false;
         let isProcessingScan = false;
+        let isLoggingIn = false;
+        let globalUserData = null; // เก็บ UserData ล่าสุดสำหรับใช้โชว์ดาว
+        
+        // ตัวแปรสำหรับ Rating
+        let pendingRatingStationId = null;
+        let pendingRatingStationName = null;
+        let selectedRating = 0;
 
-        function handleOtp(field, event) {
-            field.value = field.value.replace(/[^0-9]/g, '');
-            if (field.value.length >= 1) {
-                field.value = field.value.charAt(0);
-                if (field.nextElementSibling) field.nextElementSibling.focus();
-            }
-        }
-        document.querySelectorAll('.otp-box').forEach((box, index, list) => {
-            box.addEventListener('keyup', (e) => {
+        // -----------------------------------------------------------
+        // 1. ระบบจัดการกล่องกรอกรหัส
+        // -----------------------------------------------------------
+        const otpInputs = document.querySelectorAll('.otp-box');
+
+        otpInputs.forEach((input, index) => {
+            input.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, ''); 
+                if (this.value !== '') {
+                    if (index < otpInputs.length - 1) {
+                        otpInputs[index + 1].focus();
+                    } else {
+                        this.blur();
+                        login(); 
+                    }
+                }
+            });
+
+            input.addEventListener('keydown', function(e) {
                 if (e.key === 'Backspace' || e.keyCode === 8) {
-                    if (box.value === '' && list[index - 1]) list[index - 1].focus();
+                    if (this.value === '') {
+                        if (index > 0) {
+                            otpInputs[index - 1].focus();
+                            otpInputs[index - 1].value = '';
+                        }
+                    } else {
+                        this.value = '';
+                    }
+                    e.preventDefault();
+                }
+            });
+
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                let pasteData = (e.clipboardData || window.clipboardData).getData('text');
+                pasteData = pasteData.replace(/[^0-9]/g, '').substring(0, 6);
+                
+                for (let i = 0; i < pasteData.length; i++) {
+                    if (otpInputs[i]) {
+                        otpInputs[i].value = pasteData[i];
+                    }
+                }
+                
+                if (pasteData.length === 6) {
+                    otpInputs[5].blur();
+                    login();
                 }
             });
         });
 
+        // -----------------------------------------------------------
+        // 2. ฟังก์ชัน Login เข้าสู่ระบบ 
+        // -----------------------------------------------------------
         async function login() {
-            let input = Array.from(document.querySelectorAll('.otp-box')).map(box => box.value).join('');
-            if (input.length !== 6) { alert("กรุณากรอกรหัสให้ครบ 6 หลัก"); return; }
+            if (isLoggingIn) return; 
             
-            document.getElementById('btnLogin').disabled = true;
-            document.getElementById('btnLogin').innerText = "กำลังตรวจสอบ...";
+            let input = Array.from(otpInputs).map(box => box.value).join('');
+            if (input.length !== 6) { 
+                alert("กรุณากรอกรหัสให้ครบ 6 หลัก"); 
+                return; 
+            }
+            
+            isLoggingIn = true;
+            let btn = document.getElementById('btnLogin');
+            btn.disabled = true;
+            btn.innerText = "กำลังตรวจสอบ...";
 
-            const snapshot = await db.ref(`users/${input}`).once('value');
-            if (snapshot.exists()) {
-                currentUserCode = input;
-                document.getElementById('displayUserCode').innerText = `รหัสสมาชิก: ${currentUserCode}`;
+            try {
+                const snapshot = await db.ref(`users/${input}`).once('value');
                 
-                if (!snapshot.val().loginTime) await db.ref(`users/${currentUserCode}/loginTime`).set(Date.now());
+                if (snapshot.exists()) {
+                    currentUserCode = input;
+                    document.getElementById('displayUserCode').innerText = `รหัสสมาชิก: ${currentUserCode}`;
+                    
+                    if (!snapshot.val().loginTime) {
+                        await db.ref(`users/${currentUserCode}/loginTime`).set(Date.now());
+                    }
 
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('stampScreen').classList.remove('hidden');
-                
-                dbRef = db.ref(`users/${currentUserCode}`);
-                dbRef.on('value', (snap) => {
-                    if(snap.exists()) renderUI(snap.val());
-                });
-            } else {
-                alert("❌ ไม่พบรหัสนี้ในระบบ");
-                document.getElementById('btnLogin').disabled = false;
-                document.getElementById('btnLogin').innerText = "ตกลงเพื่อเข้าสู่ระบบ";
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('stampScreen').classList.remove('hidden');
+                    
+                    dbRef = db.ref(`users/${currentUserCode}`);
+                    dbRef.on('value', (snap) => {
+                        if(snap.exists()) {
+                            globalUserData = snap.val();
+                            renderUI(globalUserData);
+                        }
+                    });
+                } else {
+                    alert("❌ ไม่พบรหัสนี้ในระบบ\n(ตรวจสอบให้แน่ใจว่ามีการเพิ่มรหัส 6 หลักนี้ไว้ในฐานข้อมูล Firebase แล้ว)");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล กรุณาลองอีกครั้ง");
+            } finally {
+                isLoggingIn = false;
+                btn.disabled = false;
+                btn.innerText = "ตกลงเพื่อเข้าสู่ระบบ";
             }
         }
 
+        // -----------------------------------------------------------
+        // 3. ฟังก์ชันอัปเดตหน้าจอและการจัดการ UI (รวมระบบสลับตำแหน่งฐาน)
+        // -----------------------------------------------------------
         function renderUI(userData) {
             if (!userData) return;
+            
             if (userData.isRedeemed) {
                 document.getElementById('stampArea').classList.add('hidden');
                 document.getElementById('successBanner').classList.remove('hidden');
@@ -188,18 +321,38 @@
             mapContainer.innerHTML = ''; 
             let count = 0;
             const userStations = userData.stations || {}; 
+            
+            let posMap = {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6}; 
+            
+            if (userData.scanHistory) {
+                const historyList = Object.values(userData.scanHistory).sort((a, b) => a.time - b.time);
+                historyList.forEach(record => {
+                    const targetId = parseInt(record.id);
+                    const currentCenterId = Object.keys(posMap).find(key => posMap[key] === 0);
+                    const targetCurrentPos = posMap[targetId];
+                    
+                    posMap[currentCenterId] = targetCurrentPos;
+                    posMap[targetId] = 0; 
+                });
+            }
 
             STATIONS.forEach((st, index) => {
                 const node = document.createElement('div');
                 const isPassed = userStations[index] === true;
+                const currentPosClass = posMap[index]; 
                 
                 if (isPassed) {
                     count++;
-                    node.className = `station-node st-${index} stamped`;
+                    node.className = `station-node st-${currentPosClass} stamped`;
                     node.innerHTML = `<img src="${st.imgStamped}" alt="${st.name}">`;
+                    // ส่ง true เข้าไปเผื่อบังคับเปิดกล่องเนื้อหา
+                    node.onclick = () => toggleStationContent(index); 
                 } else {
-                    node.className = `station-node st-${index} unstamped`;
-                    node.innerHTML = `<img src="${st.imgUnstamped}" alt="${st.name}"><span>${st.name}</span>`;
+                    node.className = `station-node st-${currentPosClass} unstamped`;
+                    node.innerHTML = `
+                        <img src="${st.imgUnstamped}" alt="${st.name}">
+                        <span>${st.name}</span>
+                    `;
                     node.onclick = () => openScannerFor(index);
                 }
                 mapContainer.appendChild(node);
@@ -209,8 +362,99 @@
             document.getElementById('btnRedeem').disabled = (count < 7);
         }
 
+        // เพิ่มการดึงดาวมาโชว์ที่กล่องเนื้อหา
+        function toggleStationContent(stationId, forceOpen = false) {
+            const box = document.getElementById('contentBox');
+            if (!forceOpen && box.dataset.activeId == stationId && !box.classList.contains('hidden')) {
+                box.classList.add('hidden'); 
+            } else {
+                box.dataset.activeId = stationId;
+                
+                // เช็คว่ามีข้อมูล Rating ไหม
+                let ratingHtml = "";
+                if (globalUserData && globalUserData.ratings && globalUserData.ratings[stationId]) {
+                    const starCount = globalUserData.ratings[stationId];
+                    const stars = "★".repeat(starCount) + "☆".repeat(5 - starCount);
+                    ratingHtml = `<div class="display-stars">⭐ คะแนนความพึงพอใจ: <span style="font-size:18px;">${stars}</span></div>`;
+                }
+
+                box.innerHTML = `<h3>📖 ${STATIONS[stationId].name}</h3><p>${STATIONS[stationId].content}</p>${ratingHtml}`;
+                box.classList.remove('hidden'); 
+            }
+        }
+
+        // -----------------------------------------------------------
+        // 4. ระบบ Rating ก่อนบันทึกผ่านฐาน
+        // -----------------------------------------------------------
+        function showRatingBox(id, name) {
+            pendingRatingStationId = id;
+            pendingRatingStationName = name;
+            selectedRating = 0;
+            
+            document.getElementById('ratingTitle').innerText = name;
+            document.getElementById('ratingBox').classList.remove('hidden');
+            document.getElementById('mapWrapper').style.display = 'none'; // ซ่อนแผนที่ชั่วคราว
+            document.getElementById('btnSubmitRating').disabled = true;
+
+            const stars = document.querySelectorAll('#starContainer span');
+            stars.forEach(star => {
+                star.classList.remove('active');
+                star.onclick = function() {
+                    selectedRating = parseInt(this.getAttribute('data-value'));
+                    stars.forEach(s => s.classList.remove('active'));
+                    for(let i=0; i<selectedRating; i++) {
+                        stars[i].classList.add('active');
+                    }
+                    document.getElementById('btnSubmitRating').disabled = false;
+                };
+            });
+        }
+
+        async function submitRating() {
+            if (selectedRating === 0 || pendingRatingStationId === null) return;
+            
+            const btn = document.getElementById('btnSubmitRating');
+            btn.disabled = true;
+            btn.innerText = "กำลังบันทึก...";
+
+            try {
+                // 1. บันทึกว่าผ่านฐาน
+                await db.ref(`users/${currentUserCode}/stations/${pendingRatingStationId}`).set(true);
+                // 2. บันทึกคะแนน
+                await db.ref(`users/${currentUserCode}/ratings/${pendingRatingStationId}`).set(selectedRating);
+                
+                // 3. บันทึกประวัติเพื่อทำสลับตำแหน่งตรงกลาง
+                try {
+                    const scanData = { id: pendingRatingStationId, name: pendingRatingStationName, time: Date.now() };
+                    await db.ref(`users/${currentUserCode}/scanHistory`).push(scanData);
+                } catch (historyErr) {
+                    console.warn("ไม่สามารถบันทึกประวัติได้:", historyErr);
+                }
+
+                // ซ่อนกล่อง Rating และแสดงแผนที่กลับมา
+                document.getElementById('ratingBox').classList.add('hidden');
+                document.getElementById('mapWrapper').style.display = 'flex';
+                
+                // แสดง Content ของฐานนั้นทันที
+                toggleStationContent(pendingRatingStationId, true);
+                
+            } catch(e) {
+                console.error(e);
+                alert("เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่");
+            } finally {
+                btn.innerText = "ยืนยันให้คะแนน";
+                pendingRatingStationId = null;
+            }
+        }
+
+        // -----------------------------------------------------------
+        // 5. ระบบสแกน QR Code
+        // -----------------------------------------------------------
         function openScannerFor(stationIndex) {
             if (isScannerInitializing || (html5QrCode && html5QrCode.isScanning)) return;
+            
+            document.getElementById('contentBox').classList.add('hidden');
+            document.getElementById('ratingBox').classList.add('hidden'); // เผื่อเปิดค้าง
             
             activeTargetStation = STATIONS[stationIndex];
             cancelRequested = false;
@@ -222,29 +466,50 @@
             document.getElementById('btnCancel').style.display = 'block';
             document.getElementById('btnCancel').innerText = "❌ ยกเลิกสแกนกล้อง";
 
-            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
             
             html5QrCode.start(
                 { facingMode: "environment" },
                 { fps: 10, qrbox: 230 },
                 async (decodedText) => {
                     if (isProcessingScan) return;
-                    if (decodedText.includes(activeTargetStation.qr)) {
-                        isProcessingScan = true; 
-                        const targetId = activeTargetStation.id;
-                        const targetName = activeTargetStation.name;
-                        stopScan(); 
 
-                        try {
-                            const snap = await db.ref(`users/${currentUserCode}/stations/${targetId}`).once('value');
-                            if (!snap.val()) {
-                                await db.ref(`users/${currentUserCode}/stations/${targetId}`).set(true);
-                                try {
-                                    const scanData = { id: targetId, name: targetName, time: Date.now() };
-                                    await db.ref(`users/${currentUserCode}/scanHistory`).push(scanData);
-                                } catch (historyErr) { console.warn("History Save Error:", historyErr); }
+                    const parts = decodedText.split('|');
+                    
+                    if (parts.length === 2 && parts[0] === activeTargetStation.qr) {
+                        const qrTimestamp = parseInt(parts[1]);
+                        const currentTimestamp = Date.now();
+                        const timeDifference = currentTimestamp - qrTimestamp;
+                        
+                        if (timeDifference <= 90000 && timeDifference >= -5000) {
+                            isProcessingScan = true; 
+                            stopScan(); 
+                            
+                            const targetId = activeTargetStation.id;
+                            const targetName = activeTargetStation.name;
+
+                            try {
+                                const snap = await db.ref(`users/${currentUserCode}/stations/${targetId}`).once('value');
+                                if (!snap.val()) {
+                                    // หากยังไม่เคยสแกน ให้เปิดกล่องให้คะแนน (หน่วงเวลาเล็กน้อยให้กล้องปิดสนิท)
+                                    setTimeout(() => {
+                                        showRatingBox(targetId, targetName);
+                                    }, 200);
+                                }
+                            } catch (error) {
+                                console.error("Database Connection Error:", error);
                             }
-                        } catch (error) { console.error("Database Error:", error); }
+                        } else {
+                            isProcessingScan = true; 
+                            alert(`❌ QR Code นี้หมดอายุแล้ว (อายุเกิน 1.30 นาที)\nกรุณาสแกน QR Code ล่าสุด`);
+                            stopScan(); 
+                        }
+                    } else if (decodedText.includes(activeTargetStation.qr) && !decodedText.includes('|')) {
+                        isProcessingScan = true; 
+                        alert(`❌ รูปแบบ QR Code ไม่ถูกต้อง (ไม่อนุญาตให้ใช้ QR แบบเก่า)`);
+                        stopScan(); 
                     } else {
                         isProcessingScan = true; 
                         alert(`❌ QR Code ไม่ถูกต้องสำหรับฐาน ${activeTargetStation.name}`);
@@ -257,22 +522,36 @@
                 if (cancelRequested) stopScan();
             }).catch(err => {
                 isScannerInitializing = false;
-                alert("เปิดกล้องไม่ได้ กรุณาตรวจสอบสิทธิ์");
+                alert("เปิดกล้องไม่ได้ กรุณาตรวจสอบสิทธิ์การใช้งานกล้อง");
                 resetScannerUI();
             });
         }
 
         function stopScan() {
-            if (isScannerInitializing) { cancelRequested = true; resetScannerUI(); return; }
+            if (isScannerInitializing) {
+                cancelRequested = true;
+                resetScannerUI();
+                return;
+            }
+            
             if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(resetScannerUI).catch(resetScannerUI);
-            } else { resetScannerUI(); }
+                html5QrCode.stop().then(() => {
+                    resetScannerUI();
+                }).catch(e => {
+                    resetScannerUI();
+                });
+            } else {
+                resetScannerUI();
+            }
         }
 
         function resetScannerUI() {
             document.getElementById('reader').style.display = 'none';
             document.getElementById('btnCancel').style.display = 'none';
-            document.getElementById('mapWrapper').style.display = 'flex';
+            // โชว์แผนที่กลับมาเฉพาะในกรณีที่ไม่ได้กำลังให้เรทติ้ง
+            if (document.getElementById('ratingBox').classList.contains('hidden')) {
+                document.getElementById('mapWrapper').style.display = 'flex';
+            }
             activeTargetStation = null;
             isScannerInitializing = false;
             cancelRequested = false;
@@ -289,16 +568,26 @@
         function logout() {
             try {
                 stopScan();
-                if(dbRef) { dbRef.off(); dbRef = null; }
+                if(dbRef) {
+                    dbRef.off();
+                    dbRef = null;
+                }
                 currentUserCode = "";
-                document.querySelectorAll('.otp-box').forEach(box => box.value = '');
+                globalUserData = null;
+                
+                otpInputs.forEach(box => box.value = '');
                 document.getElementById('btnLogin').disabled = false;
                 document.getElementById('btnLogin').innerText = "ตกลงเพื่อเข้าสู่ระบบ";
+                
                 document.getElementById('stampScreen').classList.add('hidden');
                 document.getElementById('loginScreen').classList.remove('hidden');
                 document.getElementById('successBanner').classList.add('hidden');
                 document.getElementById('stampArea').classList.remove('hidden');
-            } catch (error) { location.reload(); }
+                document.getElementById('contentBox').classList.add('hidden');
+                document.getElementById('ratingBox').classList.add('hidden');
+            } catch (error) {
+                location.reload(); 
+            }
         }
     </script>
 </body>
