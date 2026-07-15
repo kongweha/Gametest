@@ -55,14 +55,22 @@
         .path-flow span { background: #f1f5f9; padding: 2px 6px; border-radius: 5px; border: 1px solid #e2e8f0; display: inline-block; margin: 2px 0; }
         .path-arrow { color: #cbd5e1; font-size: 10px; margin: 0 4px; }
 
-        /* Path Styling ใหม่ (แท็บ 3 รายละเอียด) */
-        .path-flow-detailed { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
+        /* Path Styling ใหม่ (แท็บ 3 รายละเอียด) - ปรับเป็นระนาบเดียวกัน 7 ช่อง */
+        .path-flow-detailed { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 8px; 
+            margin-top: 5px; 
+            overflow-x: auto; 
+            padding-bottom: 5px;
+        }
         .path-step { 
-            background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; 
-            font-size: 12px; flex: 1 1 130px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 5px; 
+            font-size: 12px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            min-width: 105px;
         }
         .step-header { font-size: 11px; color: #64748b; margin-bottom: 5px; font-weight: bold; border-bottom: 1px dashed #cbd5e1; padding-bottom: 3px;}
-        .step-name { font-weight: bold; color: #0f172a; margin-bottom: 6px; font-size: 12px; line-height: 1.2; height: 28px; display: flex; align-items: center; justify-content: center;}
+        .step-name { font-weight: bold; color: #0f172a; margin-bottom: 6px; font-size: 11px; line-height: 1.2; height: 26px; display: flex; align-items: center; justify-content: center;}
         .step-time { font-size: 11px; color: #b45309; background: #fef3c7; padding: 3px 6px; border-radius: 5px; display: inline-block; margin-bottom: 5px; font-weight: bold;}
         .step-rating { font-size: 14px; color: #f59e0b; margin-top: 3px;}
         
@@ -223,9 +231,8 @@
             }
         }
 
-        // ฟังชันก์ Export CSV โดยแยกฐาน 1-7 เป็นคอลัมน์
         function exportCSV() {
-            let csvContent = "\uFEFF"; // สำหรับภาษาไทย
+            let csvContent = "\uFEFF"; 
             csvContent += "รหัสสมาชิก,สถานะ,จำนวนฐานที่ผ่าน,เวลาที่ใช้รวม(วินาที),";
             
             for(let i=1; i<=7; i++) {
@@ -236,7 +243,6 @@
             let completed = [];
             let others = [];
 
-            // จัดกลุ่มและเรียงเหมือนตาราง
             Object.keys(globalUsersData).forEach(code => {
                 let user = globalUsersData[code];
                 let passed = user.stations ? user.stations.filter(s => s === true).length : 0;
@@ -254,7 +260,6 @@
                 }
             });
 
-            // คนผ่านเรียงตามเวลาที่ทำได้ คนไม่ผ่านเรียงตามรหัส
             completed.sort((a, b) => {
                 let timeA = a.user.redeemTime || a.scans[a.scans.length-1].time;
                 let timeB = b.user.redeemTime || b.scans[b.scans.length-1].time;
@@ -291,7 +296,6 @@
                 csvContent += row + "\n";
             });
 
-            // ทำการ Download 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
@@ -324,7 +328,6 @@
             renderDetailed();
         });
 
-        // TAB 1: ตารางภาพรวม (เหมือนเดิม)
         function renderDashboard() {
             const tbody = document.getElementById('tableDashboard');
             const searchVal = document.getElementById("searchDashboard").value.trim().toLowerCase();
@@ -358,7 +361,6 @@
             tbody.innerHTML = htmlContent || '<tr><td colspan="5" style="text-align: center;">ไม่มีข้อมูล</td></tr>';
         }
 
-        // TAB 2: จัดอันดับแบบลูกศร (เหมือนเดิม)
         function renderLeaderboard() {
             const tbody = document.getElementById('tableLeaderboard');
             const searchVal = document.getElementById("searchLeaderboard").value.trim().toLowerCase();
@@ -415,7 +417,6 @@
             tbody.innerHTML = htmlContent || '<tr><td colspan="4" style="text-align: center; padding:20px;">ไม่พบประวัติผู้ที่ผ่านเกณฑ์</td></tr>';
         }
 
-        // TAB 3: ข้อมูลดาวและเวลาแยกฐาน
         function renderDetailed() {
             const tbody = document.getElementById('tableDetailed');
             const searchVal = document.getElementById("searchDetailed").value.trim().toLowerCase();
@@ -478,7 +479,6 @@
             tbody.innerHTML = htmlContent || '<tr><td colspan="3" style="text-align: center; padding:20px;">ไม่พบประวัติผู้ที่ผ่านเกณฑ์</td></tr>';
         }
 
-        // Helper Functions
         function formatTime(ms) { return ms ? new Date(ms).toLocaleTimeString('th-TH') : '-'; }
         
         function getDuration(startMs, endMs) {
