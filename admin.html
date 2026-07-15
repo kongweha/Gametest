@@ -15,6 +15,8 @@
         button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; transition: 0.2s; }
         .btn-primary { background-color: #3b82f6; color: white; }
         .btn-primary:hover { background-color: #2563eb; }
+        .btn-success { background-color: #10b981; color: white; margin-left: 10px; }
+        .btn-success:hover { background-color: #059669; }
         .btn-danger { background-color: #ef4444; color: white; margin-left: 10px; }
         .btn-danger:hover { background-color: #dc2626; }
         
@@ -48,7 +50,12 @@
         .badge.redeemed { background: #bfdbfe; color: #1e40af; }
         .clickable-status { text-decoration: underline; text-underline-offset: 4px; }
 
-        /* Path Styling ใหม่ (แบบกล่องแยกฐาน) */
+        /* Path Styling เดิม (แท็บ 2) */
+        .path-flow { font-size: 12px; color: #64748b; margin-top: 5px; line-height: 1.6; }
+        .path-flow span { background: #f1f5f9; padding: 2px 6px; border-radius: 5px; border: 1px solid #e2e8f0; display: inline-block; margin: 2px 0; }
+        .path-arrow { color: #cbd5e1; font-size: 10px; margin: 0 4px; }
+
+        /* Path Styling ใหม่ (แท็บ 3 รายละเอียด) */
         .path-flow-detailed { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
         .path-step { 
             background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; 
@@ -78,6 +85,7 @@
             <h1>⚙️ ระบบจัดการหลังบ้าน (Admin)</h1>
             <div>
                 <button class="btn-primary" onclick="generateAndUploadCodes()">🔄 สร้างรหัส 500 ใบ</button>
+                <button class="btn-success" onclick="exportCSV()">⬇️ ดึงข้อมูล CSV</button>
                 <button class="btn-danger" onclick="clearDatabase()">🗑️ ล้างข้อมูล</button>
             </div>
         </div>
@@ -91,6 +99,7 @@
         <div class="tab-menu">
             <button class="tab-btn active" onclick="switchTab('dashboard')">📊 ตารางข้อมูลรวม</button>
             <button class="tab-btn" onclick="switchTab('leaderboard')">🏆 จัดอันดับ & พฤติกรรมเส้นทาง</button>
+            <button class="tab-btn" onclick="switchTab('detailed')">⭐ รายละเอียดเวลา & คะแนนดาว</button>
         </div>
 
         <div id="tab-dashboard" class="tab-content active">
@@ -130,14 +139,32 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 5%; text-align: center;">อันดับ</th>
-                        <th style="width: 15%;">รหัสสมาชิก</th>
-                        <th style="width: 15%;">เวลาที่ใช้รวม</th>
-                        <th style="width: 65%;">เส้นทางการเล่น (เรียงลำดับตามฐาน 1-7)</th>
+                        <th style="width: 10%; text-align: center;">อันดับ</th>
+                        <th style="width: 20%;">รหัสสมาชิก</th>
+                        <th style="width: 20%;">เวลาที่ใช้รวม</th>
+                        <th style="width: 50%;">เส้นทางการเล่น (เรียงตามลำดับสแกน)</th>
                     </tr>
                 </thead>
                 <tbody id="tableLeaderboard">
                     <tr><td colspan="4" style="text-align: center;">⏳ กำลังจัดอันดับ...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="tab-detailed" class="tab-content">
+            <div class="filter-group">
+                <input type="text" id="searchDetailed" class="search-box" onkeyup="renderDetailed()" placeholder="🔍 ค้นหารหัส...">
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 5%; text-align: center;">อันดับ</th>
+                        <th style="width: 15%;">รหัสสมาชิก</th>
+                        <th style="width: 80%;">รายละเอียดเวลาและคะแนน (เรียงตามลำดับ 1-7)</th>
+                    </tr>
+                </thead>
+                <tbody id="tableDetailed">
+                    <tr><td colspan="3" style="text-align: center;">⏳ กำลังโหลดข้อมูล...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -168,11 +195,9 @@
         
         let globalUsersData = {}; 
 
-        // จัดการแท็บ
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            
             document.getElementById(`tab-${tabId}`).classList.add('active');
             event.target.classList.add('active');
         }
@@ -198,7 +223,86 @@
             }
         }
 
-        // ดึงข้อมูล Realtime
+        // ฟังชันก์ Export CSV โดยแยกฐาน 1-7 เป็นคอลัมน์
+        function exportCSV() {
+            let csvContent = "\uFEFF"; // สำหรับภาษาไทย
+            csvContent += "รหัสสมาชิก,สถานะ,จำนวนฐานที่ผ่าน,เวลาที่ใช้รวม(วินาที),";
+            
+            for(let i=1; i<=7; i++) {
+                csvContent += `ฐานลำดับที่ ${i},เวลาที่ใช้(วินาที),คะแนนดาว,`;
+            }
+            csvContent += "\n";
+
+            let completed = [];
+            let others = [];
+
+            // จัดกลุ่มและเรียงเหมือนตาราง
+            Object.keys(globalUsersData).forEach(code => {
+                let user = globalUsersData[code];
+                let passed = user.stations ? user.stations.filter(s => s === true).length : 0;
+                
+                if (passed === 7 && user.scanHistory) {
+                    let scans = Object.values(user.scanHistory).sort((a,b) => a.time - b.time);
+                    if(scans.length > 0) {
+                        completed.push({ code: code, user: user, scans: scans });
+                    } else {
+                        others.push({ code: code, user: user, scans: [] });
+                    }
+                } else {
+                    let scans = user.scanHistory ? Object.values(user.scanHistory).sort((a,b) => a.time - b.time) : [];
+                    others.push({ code: code, user: user, scans: scans });
+                }
+            });
+
+            // คนผ่านเรียงตามเวลาที่ทำได้ คนไม่ผ่านเรียงตามรหัส
+            completed.sort((a, b) => {
+                let timeA = a.user.redeemTime || a.scans[a.scans.length-1].time;
+                let timeB = b.user.redeemTime || b.scans[b.scans.length-1].time;
+                return timeA - timeB; 
+            });
+            others.sort((a, b) => a.code.localeCompare(b.code));
+
+            let allUsers = [...completed, ...others];
+
+            allUsers.forEach(item => {
+                let passed = item.user.stations ? item.user.stations.filter(s => s === true).length : 0;
+                let status = passed === 0 ? "ยังไม่เริ่ม" : (passed < 7 ? "กำลังเล่น" : (item.user.isRedeemed ? "รับรางวัลแล้ว" : "ผ่านครบแล้ว"));
+                
+                let totalSec = "";
+                if(item.user.loginTime && item.scans.length > 0) {
+                    let endTime = item.user.redeemTime || item.scans[item.scans.length-1].time;
+                    totalSec = Math.floor((endTime - item.user.loginTime) / 1000);
+                }
+
+                let row = `"${item.code}","${status}","${passed}/7","${totalSec}",`;
+
+                let lastTime = item.user.loginTime;
+                for(let i=0; i<7; i++) {
+                    if(item.scans[i]) {
+                        let scan = item.scans[i];
+                        let durationSec = lastTime ? Math.floor((scan.time - lastTime) / 1000) : "";
+                        let rating = (item.user.ratings && item.user.ratings[scan.id]) ? item.user.ratings[scan.id] : "";
+                        row += `"${scan.name}","${durationSec}","${rating}",`;
+                        lastTime = scan.time;
+                    } else {
+                        row += `"","","",`;
+                    }
+                }
+                csvContent += row + "\n";
+            });
+
+            // ทำการ Download 
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `DataExport_${new Date().getTime()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         db.ref('users').on('value', (snapshot) => {
             globalUsersData = snapshot.val() || {};
             
@@ -217,16 +321,16 @@
 
             renderDashboard();
             renderLeaderboard();
+            renderDetailed();
         });
 
-        // ---------------- TAB 1: เรนเดอร์ตารางภาพรวม ----------------
+        // TAB 1: ตารางภาพรวม (เหมือนเดิม)
         function renderDashboard() {
             const tbody = document.getElementById('tableDashboard');
             const searchVal = document.getElementById("searchDashboard").value.trim().toLowerCase();
             
             let htmlContent = '';
             let index = 1;
-
             const sortedCodes = Object.keys(globalUsersData).sort();
 
             sortedCodes.forEach((code) => {
@@ -254,7 +358,7 @@
             tbody.innerHTML = htmlContent || '<tr><td colspan="5" style="text-align: center;">ไม่มีข้อมูล</td></tr>';
         }
 
-        // ---------------- TAB 2: เรนเดอร์ตารางจัดอันดับ (อัปเดต Path แบบเรียง 1-7) ----------------
+        // TAB 2: จัดอันดับแบบลูกศร (เหมือนเดิม)
         function renderLeaderboard() {
             const tbody = document.getElementById('tableLeaderboard');
             const searchVal = document.getElementById("searchLeaderboard").value.trim().toLowerCase();
@@ -265,16 +369,68 @@
             Object.keys(globalUsersData).forEach(code => {
                 let user = globalUsersData[code];
                 const passedStations = user.stations ? user.stations.filter(s => s === true).length : 0;
-                
                 if (passedStations === 7 && user.scanHistory) {
                     let scans = Object.values(user.scanHistory).sort((a,b) => a.time - b.time);
-                    if(scans.length > 0) {
-                        rankedUsers.push({ code: code, user: user, scans: scans });
-                    }
+                    if(scans.length > 0) rankedUsers.push({ code: code, user: user, scans: scans });
                 }
             });
 
-            // จัดอันดับตามเวลาที่จบ
+            rankedUsers.sort((a, b) => {
+                let timeA = a.user.redeemTime || a.scans[a.scans.length-1].time;
+                let timeB = b.user.redeemTime || b.scans[b.scans.length-1].time;
+                return timeA - timeB; 
+            });
+
+            let htmlContent = '';
+            let rank = 1;
+            
+            rankedUsers.forEach((item) => {
+                if (searchVal && !item.code.includes(searchVal)) return;
+                let firstStationId = item.scans[0].id.toString();
+                if (filterStart !== "all" && firstStationId !== filterStart) return;
+
+                let totalTimeText = "-";
+                if(item.user.loginTime) {
+                    let endTime = item.user.redeemTime || item.scans[item.scans.length-1].time;
+                    totalTimeText = getDuration(item.user.loginTime, endTime);
+                }
+
+                let pathHtml = `<div class="path-flow">`;
+                item.scans.forEach((scan, i) => {
+                    pathHtml += `<span>${scan.name}</span>`;
+                    if(i < item.scans.length - 1) pathHtml += `<span class="path-arrow">➔</span>`;
+                });
+                pathHtml += `</div>`;
+
+                htmlContent += `
+                    <tr>
+                        <td style="text-align: center; font-size: 18px; font-weight: bold; color: #d97706;">#${rank++}</td>
+                        <td style="font-family: monospace; font-size: 18px; font-weight: bold;">${item.code}</td>
+                        <td style="color: #64748b;">${totalTimeText}</td>
+                        <td>${pathHtml}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = htmlContent || '<tr><td colspan="4" style="text-align: center; padding:20px;">ไม่พบประวัติผู้ที่ผ่านเกณฑ์</td></tr>';
+        }
+
+        // TAB 3: ข้อมูลดาวและเวลาแยกฐาน
+        function renderDetailed() {
+            const tbody = document.getElementById('tableDetailed');
+            const searchVal = document.getElementById("searchDetailed").value.trim().toLowerCase();
+
+            let rankedUsers = [];
+
+            Object.keys(globalUsersData).forEach(code => {
+                let user = globalUsersData[code];
+                const passedStations = user.stations ? user.stations.filter(s => s === true).length : 0;
+                if (passedStations === 7 && user.scanHistory) {
+                    let scans = Object.values(user.scanHistory).sort((a,b) => a.time - b.time);
+                    if(scans.length > 0) rankedUsers.push({ code: code, user: user, scans: scans });
+                }
+            });
+
             rankedUsers.sort((a, b) => {
                 let timeA = a.user.redeemTime || a.scans[a.scans.length-1].time;
                 let timeB = b.user.redeemTime || b.scans[b.scans.length-1].time;
@@ -287,26 +443,13 @@
             rankedUsers.forEach((item) => {
                 if (searchVal && !item.code.includes(searchVal)) return;
 
-                let firstStationId = item.scans[0].id.toString();
-                if (filterStart !== "all" && firstStationId !== filterStart) return;
-
-                // เวลาที่ใช้รวมทั้งหมด
-                let totalTimeText = "-";
-                if(item.user.loginTime) {
-                    let endTime = item.user.redeemTime || item.scans[item.scans.length-1].time;
-                    totalTimeText = getDuration(item.user.loginTime, endTime);
-                }
-
-                // สร้าง Path HTML 1-7
                 let pathHtml = `<div class="path-flow-detailed">`;
-                let lastTime = item.user.loginTime; // เริ่มจับเวลาจากตอนล็อกอิน
+                let lastTime = item.user.loginTime; 
 
                 item.scans.forEach((scan, i) => {
-                    // คำนวณระยะเวลาของแต่ละฐาน (เทียบกับเวลาสแกนก่อนหน้า)
                     let durationText = lastTime ? getDuration(lastTime, scan.time) : '-';
-                    lastTime = scan.time; // อัปเดตเวลาล่าสุดสำหรับฐานถัดไป
+                    lastTime = scan.time; 
 
-                    // ดึงคะแนนดาว
                     let ratingVal = (item.user.ratings && item.user.ratings[scan.id]) ? parseInt(item.user.ratings[scan.id]) : 0;
                     let starsHtml = ratingVal > 0 
                         ? '⭐'.repeat(ratingVal) 
@@ -327,16 +470,15 @@
                     <tr>
                         <td style="text-align: center; font-size: 18px; font-weight: bold; color: #d97706;">#${rank++}</td>
                         <td style="font-family: monospace; font-size: 18px; font-weight: bold;">${item.code}</td>
-                        <td style="color: #64748b; font-weight: bold;">${totalTimeText}</td>
                         <td>${pathHtml}</td>
                     </tr>
                 `;
             });
 
-            tbody.innerHTML = htmlContent || '<tr><td colspan="4" style="text-align: center; padding:20px;">ไม่พบประวัติผู้ที่ผ่านเกณฑ์</td></tr>';
+            tbody.innerHTML = htmlContent || '<tr><td colspan="3" style="text-align: center; padding:20px;">ไม่พบประวัติผู้ที่ผ่านเกณฑ์</td></tr>';
         }
 
-        // ---------------- Helper & Modal ----------------
+        // Helper Functions
         function formatTime(ms) { return ms ? new Date(ms).toLocaleTimeString('th-TH') : '-'; }
         
         function getDuration(startMs, endMs) {
