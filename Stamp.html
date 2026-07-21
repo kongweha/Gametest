@@ -140,7 +140,7 @@
         <h2 id="txtCardTitle">🎉 Stamp Card</h2>
         <div class="user-info" id="displayUserCode">User ID: XXXXXX</div>
         
-        <!-- View 1: หน้าของรางวัล -->
+        <!-- View 1: หน้าของรางวัล (Reward Page) -->
         <div id="rewardView" class="hidden">
             <div class="success-banner">
                 <div id="txtSuccessTitle" style="font-size: 18px; margin-bottom: 8px;">🎁 รับของรางวัลเรียบร้อยแล้ว!</div>
@@ -151,7 +151,7 @@
                 <div id="txtMapPlaceholder">[ พื้นที่สำหรับใส่แผนที่จุดรับของรางวัล ]</div>
             </div>
 
-            <!-- เพิ่มปุ่มหมุนล้อชะตาตรงนี้ (เหนือปุ่มดูบัตรสะสมแต้ม) -->
+            <!-- ปุ่มหมุนล้อชะตา -->
             <button id="btnDrawCard" class="btn-gacha" onclick="openCardDraw()">🔮 หมุนล้อชะตา</button>
             
             <button id="btnViewStamps" class="btn-primary" onclick="switchView('stamp')">ดูบัตรสะสมแต้ม</button>
@@ -194,13 +194,11 @@
         <div id="cardDrawView" class="hidden">
             <h2 id="txtDrawTitle" style="color: #8b5cf6; margin-top: 5px;">🔮 หมุนล้อชะตา</h2>
             
-            <!-- ส่วนแอนิเมชันก่อนสุ่ม -->
             <div id="drawIntroArea">
                 <div id="shufflingIcon" style="font-size: 90px; margin: 30px 0; text-shadow: 0 5px 15px rgba(0,0,0,0.1);">🎴</div>
                 <button id="btnStartDraw" class="btn-gacha" onclick="startCardDraw()" style="font-size: 18px; padding: 16px;">เริ่มสุ่มการ์ด</button>
             </div>
 
-            <!-- ส่วนแสดงผลหลังสุ่มได้แล้ว -->
             <div id="drawResultArea" class="card-result hidden">
                 <h3 id="txtYourCard" style="margin-top:0; color:#86198f;">การ์ดชะตาของคุณ</h3>
                 <div id="drawnEmoji" style="font-size: 80px; margin: 15px 0; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));"></div>
@@ -231,7 +229,6 @@
     </div>
 
     <script>
-        // Dictionary ข้อมูลภาษา 
         let currentLang = 'en';
         const LANG = {
             en: {
@@ -318,7 +315,6 @@
             }
         };
 
-        // ข้อมูลการ์ดทั้ง 16 ใบ
         const DESTINY_CARDS = [
             { id: 1, emj: "🌟", nameEn: "The Star", nameTh: "ดวงดาวแห่งความหวัง", descEn: "Good luck and inspiration will guide you.", descTh: "โชคดีและแรงบันดาลใจกำลังเดินทางมาหาคุณ" },
             { id: 2, emj: "☀️", nameEn: "The Sun", nameTh: "พระอาทิตย์ส่องสว่าง", descEn: "Success and pure joy are waiting for you.", descTh: "ความสำเร็จและความสุขอันสดใสรอคุณอยู่" },
@@ -417,14 +413,12 @@
         let finalSelectedRating = 0;
         let currentScreenView = null; 
 
-        // ระบบสลับหน้า 3 Views (Reward / Stamp / CardDraw)
         function switchView(viewName) {
             currentScreenView = viewName;
             const rewardView = document.getElementById('rewardView');
             const stampView = document.getElementById('stampView');
             const cardDrawView = document.getElementById('cardDrawView');
             
-            // ซ่อนทุกหน้าก่อน
             rewardView.classList.add('hidden');
             stampView.classList.add('hidden');
             cardDrawView.classList.add('hidden');
@@ -491,12 +485,10 @@
             
             if (globalUserData) {
                 renderUI(globalUserData);
-                // Refresh Content Box if open
                 const activeId = document.getElementById('contentBox').dataset.activeId;
                 if(activeId !== undefined && !document.getElementById('contentBox').classList.contains('hidden')) {
                     toggleStationContent(activeId, true);
                 }
-                // Refresh Card Draw if open
                 if (currentScreenView === 'cardDraw' && globalUserData.drawnCardId) {
                     showDrawnCard(globalUserData.drawnCardId);
                 }
@@ -710,16 +702,13 @@
             }
         }
 
-        // --- ระบบสุ่มการ์ดหมุนล้อชะตา ---
         function openCardDraw() {
             switchView('cardDraw');
             const l = LANG[currentLang];
             
-            // เช็คว่าเคยสุ่มไปหรือยัง ถ้าเคยแล้วโชว์ผลลัพธ์เลย
             if (globalUserData && globalUserData.drawnCardId) {
                 showDrawnCard(globalUserData.drawnCardId);
             } else {
-                // ถ้ายังไม่เคยสุ่ม โชว์หน้าสุ่ม
                 document.getElementById('drawIntroArea').classList.remove('hidden');
                 document.getElementById('drawResultArea').classList.add('hidden');
                 document.getElementById('shufflingIcon').classList.remove('shuffle-anim');
@@ -738,20 +727,17 @@
             const icon = document.getElementById('shufflingIcon');
             icon.classList.add('shuffle-anim');
             
-            // แอนิเมชันสับไพ่
             const shuffleInterval = setInterval(() => {
                 icon.innerText = DESTINY_CARDS[Math.floor(Math.random() * 16)].emj;
             }, 100);
 
-            // รอ 2 วินาที แล้วออกผลลัพธ์
             setTimeout(async () => {
                 clearInterval(shuffleInterval);
                 icon.classList.remove('shuffle-anim');
                 
-                const randomId = Math.floor(Math.random() * 16) + 1; // สุ่ม 1-16
+                const randomId = Math.floor(Math.random() * 16) + 1;
                 
                 try {
-                    // บันทึกการ์ดลงฐานข้อมูล (ผู้ใช้แต่ละคนสุ่มได้ 1 ครั้งเป็นที่ระลึก)
                     await db.ref(`users/${currentUserCode}/drawnCardId`).set(randomId);
                     showDrawnCard(randomId);
                 } catch(e) {
@@ -773,7 +759,6 @@
                 document.getElementById('drawResultArea').classList.remove('hidden');
             }
         }
-        // ------------------------------
 
         function openScannerFor(stationIndex) {
             if (isScannerInitializing || (html5QrCode && html5QrCode.isScanning) || (globalUserData && globalUserData.isRedeemed)) return;
@@ -885,11 +870,9 @@
             const btn = document.getElementById('btnSubmitFinal');
             btn.disabled = true;
 
-            // ปิด Modal ประเมิน และสลับหน้าไป Reward ทันที (Instant Jump)
             closeFinalAssessment();
-            switchView('reward'); 
+            switchView('reward'); // เด้งมาหน้า Reward Page ทันที
             
-            // ส่งข้อมูลไปเซิร์ฟเวอร์แบบเบื้องหลัง
             try {
                 db.ref(`users/${currentUserCode}/finalIntentionRating`).set(finalSelectedRating);
                 db.ref(`users/${currentUserCode}/redeemTime`).set(Date.now());
