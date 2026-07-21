@@ -19,7 +19,7 @@
         .otp-box { width: 45px; height: 50px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 22px; text-align: center; font-weight: bold; color: #334155; -webkit-appearance: none; }
         .otp-box:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 5px rgba(59,130,246,0.3); }
 
-        /* ตัวครอบแผนที่ ช่วยบังคับให้อยู่กึ่งกลางเสมอแม้มือถือจอเล็ก */
+        /* ตัวครอบแผนที่ */
         .map-wrapper { width: 100%; display: flex; justify-content: center; align-items: center; margin: 20px 0; overflow: visible; }
         .map-container { position: relative; width: 330px; height: 330px; flex-shrink: 0; }
         
@@ -59,22 +59,34 @@
         .user-info { background-color: #e2e8f0; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #475569; display: inline-block; margin-bottom: 10px; }
         .success-banner { background-color: #fef3c7; border: 2px solid #f59e0b; color: #d97706; padding: 20px; border-radius: 15px; margin: 20px 0; font-size: 18px; font-weight: bold;}
 
-        /* สไตล์สำหรับกล่องเนื้อหาที่ซ่อนไว้ */
+        /* สไตล์กล่องเนื้อหา */
         .content-box { background-color: #f0f9ff; border: 2px solid #bae6fd; color: #0369a1; padding: 15px; border-radius: 15px; margin-bottom: 15px; text-align: left; font-size: 14px; animation: fadeIn 0.3s ease; }
         .content-box h3 { margin-top: 0; color: #0284c7; margin-bottom: 8px; font-size: 16px;}
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* สไตล์สำหรับกล่อง Rating */
+        /* สไตล์สำหรับกล่อง Rating (Emoji) */
         .rating-box { background-color: #fffbeb; border: 2px solid #fcd34d; padding: 20px; border-radius: 15px; margin: 15px 0; text-align: center; animation: fadeIn 0.3s ease; }
-        .stars { display: flex; justify-content: center; gap: 10px; font-size: 35px; margin: 15px 0; cursor: pointer; color: #e2e8f0; }
-        .stars span { transition: color 0.2s; }
-        .stars span.active { color: #f59e0b; }
-        .display-stars { font-size: 14px; color: #d97706; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #bae6fd; font-weight: bold; }
+        
+        .stars { display: flex; justify-content: center; gap: 8px; font-size: 12px; margin: 15px 0; cursor: pointer; }
+        .stars span { transition: all 0.2s; filter: grayscale(100%) opacity(0.5); font-weight: normal; line-height: 1.3; padding: 8px 4px; border-radius: 10px; flex: 1; }
+        .stars span.active { filter: grayscale(0%) opacity(1); transform: scale(1.1); font-weight: bold; color: #d97706; background-color: #fef3c7; border: 1px solid #fde68a; }
+        .stars span .emoji { font-size: 28px; margin-bottom: 5px; display: block; }
+        
+        .display-stars { font-size: 14px; color: #d97706; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #bae6fd; font-weight: bold; text-align: center;}
+
+        /* สไตล์สำหรับกล่องประเมินรับรางวัล (Popup Modal) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: white; padding: 25px 20px; border-radius: 20px; text-align: center; max-width: 400px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .final-stars { display: flex; justify-content: center; gap: 10px; font-size: 40px; margin: 15px 0; cursor: pointer; color: #e2e8f0; }
+        .final-stars span { transition: color 0.2s, transform 0.2s; }
+        .final-stars span.active { color: #f59e0b; transform: scale(1.1); }
 
         @media (max-width: 360px) {
             .otp-box { width: 38px; height: 45px; font-size: 18px; }
             .otp-container { gap: 5px; }
             .map-container { transform: scale(0.9); }
+            .stars span { font-size: 10px; }
+            .stars span .emoji { font-size: 24px; }
         }
     </style>
 </head>
@@ -109,14 +121,14 @@
             
             <!-- กล่องให้คะแนน (ซ่อนไว้ตอนแรก) -->
             <div id="ratingBox" class="rating-box hidden">
-                <h3 style="margin-top:0; color: #b45309;">⭐บอกเราหน่อยว่าฐานนี้เป็นยังไง</h3>
-                <div id="ratingTitle" style="font-weight: bold; color: #92400e;"></div>
+                <h3 style="margin-top:0; color: #b45309;">⭐ บอกเราหน่อยว่าฐานนี้เป็นยังไง</h3>
+                <div id="ratingTitle" style="font-weight: bold; color: #92400e; margin-bottom: 10px;"></div>
                 <div class="stars" id="starContainer">
-                    <span data-value="1">😵‍💫<br>งงมาก</span>
-                    <span data-value="2">🤔<br>แอบซับซ้อน</span>
-                    <span data-value="3">😐<br>พอได้อยู่</span>
-                    <span data-value="4">🙂<br>เข้าใจดี</span>
-                    <span data-value="5">🤩<br>เคลียร์สุดๆ</span>
+                    <span data-value="1"><span class="emoji">😵‍💫</span>งงมาก</span>
+                    <span data-value="2"><span class="emoji">🤔</span>แอบซับซ้อน</span>
+                    <span data-value="3"><span class="emoji">😐</span>พอได้อยู่</span>
+                    <span data-value="4"><span class="emoji">🙂</span>เข้าใจดี</span>
+                    <span data-value="5"><span class="emoji">🤩</span>เคลียร์สุดๆ</span>
                 </div>
                 <button id="btnSubmitRating" class="btn-primary" disabled onclick="submitRating()">ยืนยันให้คะแนน</button>
             </div>
@@ -134,6 +146,25 @@
         </div>
         
         <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+    </div>
+
+    <!-- Popup ประเมินก่อนรับรางวัล -->
+    <div id="finalAssessmentOverlay" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 style="margin-top: 0; color: #b45309; font-size: 18px;">📝 แบบประเมินก่อนรับรางวัล</h3>
+            <p style="font-size: 14px; color: #475569; margin-bottom: 20px; line-height: 1.5; text-align: left;">
+                จากกิจกรรมในวันนี้ คุณมีความตั้งใจที่จะเข้าไปใช้บริการพื้นที่จริงของสำนักวิทยทรัพยากร (เช่น พื้นที่ Chula AIX) ภายในภาคการศึกษานี้ มากน้อยเพียงใด?
+            </p>
+            <div class="final-stars" id="finalStarContainer">
+                <span data-value="1">★</span>
+                <span data-value="2">★</span>
+                <span data-value="3">★</span>
+                <span data-value="4">★</span>
+                <span data-value="5">★</span>
+            </div>
+            <button id="btnSubmitFinal" class="btn-primary" style="margin-top: 20px;" disabled onclick="submitFinalAssessment()">ยืนยันและรับรางวัล</button>
+            <button class="btn-cancel" style="display: block; width: 100%; margin-top: 10px; background-color: #cbd5e1; color: #475569;" onclick="closeFinalAssessment()">ยกเลิก</button>
+        </div>
     </div>
 
     <script>
@@ -189,6 +220,15 @@
             }
         ];
 
+        // Dictionary สำหรับแปลงคะแนนเป็น Emoji
+        const RATING_LABELS = {
+            1: "😵‍💫 งงมาก",
+            2: "🤔 แอบซับซ้อน",
+            3: "😐 พอได้อยู่",
+            4: "🙂 เข้าใจดี",
+            5: "🤩 เคลียร์สุดๆ"
+        };
+
         let currentUserCode = "";
         let html5QrCode;
         let dbRef = null;
@@ -197,16 +237,14 @@
         let cancelRequested = false;
         let isProcessingScan = false;
         let isLoggingIn = false;
-        let globalUserData = null; // เก็บ UserData ล่าสุดสำหรับใช้โชว์ดาว
+        let globalUserData = null;
         
-        // ตัวแปรสำหรับ Rating
         let pendingRatingStationId = null;
         let pendingRatingStationName = null;
         let selectedRating = 0;
+        let finalSelectedRating = 0; // ตัวแปรสำหรับคะแนนตอนรับรางวัล
 
-        // -----------------------------------------------------------
-        // 1. ระบบจัดการกล่องกรอกรหัส
-        // -----------------------------------------------------------
+        // 1. ระบบจัดการกล่องกรอกรหัส (คงเดิม)
         const otpInputs = document.querySelectorAll('.otp-box');
 
         otpInputs.forEach((input, index) => {
@@ -254,9 +292,7 @@
             });
         });
 
-        // -----------------------------------------------------------
-        // 2. ฟังก์ชัน Login เข้าสู่ระบบ 
-        // -----------------------------------------------------------
+        // 2. ฟังก์ชัน Login เข้าสู่ระบบ (คงเดิม)
         async function login() {
             if (isLoggingIn) return; 
             
@@ -305,9 +341,7 @@
             }
         }
 
-        // -----------------------------------------------------------
-        // 3. ฟังก์ชันอัปเดตหน้าจอและการจัดการ UI (รวมระบบสลับตำแหน่งฐาน)
-        // -----------------------------------------------------------
+        // 3. ฟังก์ชันอัปเดตหน้าจอและการจัดการ UI 
         function renderUI(userData) {
             if (!userData) return;
             
@@ -345,7 +379,6 @@
                     count++;
                     node.className = `station-node st-${currentPosClass} stamped`;
                     node.innerHTML = `<img src="${st.imgStamped}" alt="${st.name}">`;
-                    // ส่ง true เข้าไปเผื่อบังคับเปิดกล่องเนื้อหา
                     node.onclick = () => toggleStationContent(index); 
                 } else {
                     node.className = `station-node st-${currentPosClass} unstamped`;
@@ -362,7 +395,7 @@
             document.getElementById('btnRedeem').disabled = (count < 7);
         }
 
-        // เพิ่มการดึงดาวมาโชว์ที่กล่องเนื้อหา
+        // ดึงดาว(อีโมจิ)มาโชว์ที่กล่องเนื้อหา
         function toggleStationContent(stationId, forceOpen = false) {
             const box = document.getElementById('contentBox');
             if (!forceOpen && box.dataset.activeId == stationId && !box.classList.contains('hidden')) {
@@ -370,12 +403,16 @@
             } else {
                 box.dataset.activeId = stationId;
                 
-                // เช็คว่ามีข้อมูล Rating ไหม
                 let ratingHtml = "";
                 if (globalUserData && globalUserData.ratings && globalUserData.ratings[stationId]) {
                     const starCount = globalUserData.ratings[stationId];
-                    const stars = "★".repeat(starCount) + "☆".repeat(5 - starCount);
-                    ratingHtml = `<div class="display-stars">⭐ คะแนนความพึงพอใจ: <span style="font-size:18px;">${stars}</span></div>`;
+                    const ratingResult = RATING_LABELS[starCount] || "ไม่ได้ประเมิน";
+                    
+                    ratingHtml = `
+                    <div class="display-stars">
+                        ⭐ ผลการประเมินของคุณ
+                        <div style="font-size:22px; color:#b45309; margin-top:8px;">${ratingResult}</div>
+                    </div>`;
                 }
 
                 box.innerHTML = `<h3>📖 ${STATIONS[stationId].name}</h3><p>${STATIONS[stationId].content}</p>${ratingHtml}`;
@@ -383,9 +420,7 @@
             }
         }
 
-        // -----------------------------------------------------------
-        // 4. ระบบ Rating ก่อนบันทึกผ่านฐาน
-        // -----------------------------------------------------------
+        // 4. ระบบ Rating ก่อนบันทึกผ่านฐาน (เลือกทีละ Emoji)
         function showRatingBox(id, name) {
             pendingRatingStationId = id;
             pendingRatingStationName = name;
@@ -393,18 +428,19 @@
             
             document.getElementById('ratingTitle').innerText = name;
             document.getElementById('ratingBox').classList.remove('hidden');
-            document.getElementById('mapWrapper').style.display = 'none'; // ซ่อนแผนที่ชั่วคราว
+            document.getElementById('mapWrapper').style.display = 'none'; 
             document.getElementById('btnSubmitRating').disabled = true;
 
-            const stars = document.querySelectorAll('#starContainer span');
-            stars.forEach(star => {
-                star.classList.remove('active');
-                star.onclick = function() {
+            const emojis = document.querySelectorAll('#starContainer span');
+            emojis.forEach(emoji => {
+                emoji.classList.remove('active');
+                emoji.onclick = function() {
+                    // ลบ active ของตัวอื่นทั้งหมด
+                    emojis.forEach(s => s.classList.remove('active'));
+                    // เพิ่ม active แค่ตัวที่คลิก
+                    this.classList.add('active');
+                    
                     selectedRating = parseInt(this.getAttribute('data-value'));
-                    stars.forEach(s => s.classList.remove('active'));
-                    for(let i=0; i<selectedRating; i++) {
-                        stars[i].classList.add('active');
-                    }
                     document.getElementById('btnSubmitRating').disabled = false;
                 };
             });
@@ -418,12 +454,9 @@
             btn.innerText = "กำลังบันทึก...";
 
             try {
-                // 1. บันทึกว่าผ่านฐาน
                 await db.ref(`users/${currentUserCode}/stations/${pendingRatingStationId}`).set(true);
-                // 2. บันทึกคะแนน
                 await db.ref(`users/${currentUserCode}/ratings/${pendingRatingStationId}`).set(selectedRating);
                 
-                // 3. บันทึกประวัติเพื่อทำสลับตำแหน่งตรงกลาง
                 try {
                     const scanData = { id: pendingRatingStationId, name: pendingRatingStationName, time: Date.now() };
                     await db.ref(`users/${currentUserCode}/scanHistory`).push(scanData);
@@ -431,11 +464,8 @@
                     console.warn("ไม่สามารถบันทึกประวัติได้:", historyErr);
                 }
 
-                // ซ่อนกล่อง Rating และแสดงแผนที่กลับมา
                 document.getElementById('ratingBox').classList.add('hidden');
                 document.getElementById('mapWrapper').style.display = 'flex';
-                
-                // แสดง Content ของฐานนั้นทันที
                 toggleStationContent(pendingRatingStationId, true);
                 
             } catch(e) {
@@ -447,14 +477,12 @@
             }
         }
 
-        // -----------------------------------------------------------
-        // 5. ระบบสแกน QR Code
-        // -----------------------------------------------------------
+        // 5. ระบบสแกน QR Code (คงเดิม)
         function openScannerFor(stationIndex) {
             if (isScannerInitializing || (html5QrCode && html5QrCode.isScanning)) return;
             
             document.getElementById('contentBox').classList.add('hidden');
-            document.getElementById('ratingBox').classList.add('hidden'); // เผื่อเปิดค้าง
+            document.getElementById('ratingBox').classList.add('hidden'); 
             
             activeTargetStation = STATIONS[stationIndex];
             cancelRequested = false;
@@ -493,7 +521,6 @@
                             try {
                                 const snap = await db.ref(`users/${currentUserCode}/stations/${targetId}`).once('value');
                                 if (!snap.val()) {
-                                    // หากยังไม่เคยสแกน ให้เปิดกล่องให้คะแนน (หน่วงเวลาเล็กน้อยให้กล้องปิดสนิท)
                                     setTimeout(() => {
                                         showRatingBox(targetId, targetName);
                                     }, 200);
@@ -548,7 +575,6 @@
         function resetScannerUI() {
             document.getElementById('reader').style.display = 'none';
             document.getElementById('btnCancel').style.display = 'none';
-            // โชว์แผนที่กลับมาเฉพาะในกรณีที่ไม่ได้กำลังให้เรทติ้ง
             if (document.getElementById('ratingBox').classList.contains('hidden')) {
                 document.getElementById('mapWrapper').style.display = 'flex';
             }
@@ -558,10 +584,50 @@
             isProcessingScan = false;
         }
 
-        async function redeemReward() {
-            if (confirm("ต้องการกดแลกของรางวัลใช่หรือไม่? (ไม่สามารถย้อนกลับได้)")) {
+        // 6. ระบบใหม่: เปิด Popup ประเมินก่อนแลกรับรางวัล
+        function redeemReward() {
+            finalSelectedRating = 0;
+            document.getElementById('finalAssessmentOverlay').classList.remove('hidden');
+            document.getElementById('btnSubmitFinal').disabled = true;
+
+            const finalStars = document.querySelectorAll('#finalStarContainer span');
+            finalStars.forEach(star => {
+                star.classList.remove('active');
+                star.onclick = function() {
+                    finalSelectedRating = parseInt(this.getAttribute('data-value'));
+                    finalStars.forEach(s => s.classList.remove('active'));
+                    for(let i=0; i<finalSelectedRating; i++) {
+                        finalStars[i].classList.add('active');
+                    }
+                    document.getElementById('btnSubmitFinal').disabled = false;
+                };
+            });
+        }
+
+        function closeFinalAssessment() {
+            document.getElementById('finalAssessmentOverlay').classList.add('hidden');
+        }
+
+        async function submitFinalAssessment() {
+            if (finalSelectedRating === 0) return;
+            
+            const btn = document.getElementById('btnSubmitFinal');
+            btn.disabled = true;
+            btn.innerText = "กำลังประมวลผล...";
+
+            try {
+                // บันทึกคะแนนลง Database
+                await db.ref(`users/${currentUserCode}/finalIntentionRating`).set(finalSelectedRating);
                 await db.ref(`users/${currentUserCode}/redeemTime`).set(Date.now());
                 await db.ref(`users/${currentUserCode}/isRedeemed`).set(true);
+
+                closeFinalAssessment();
+            } catch(e) {
+                console.error(e);
+                alert("เกิดข้อผิดพลาดในการรับรางวัล กรุณาลองใหม่");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "ยืนยันและรับรางวัล";
             }
         }
 
@@ -585,6 +651,7 @@
                 document.getElementById('stampArea').classList.remove('hidden');
                 document.getElementById('contentBox').classList.add('hidden');
                 document.getElementById('ratingBox').classList.add('hidden');
+                closeFinalAssessment(); // ปิด Modal ถ้าย้อนกลับ
             } catch (error) {
                 location.reload(); 
             }
