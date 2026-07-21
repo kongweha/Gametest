@@ -92,10 +92,12 @@
         .final-stars span { transition: color 0.15s, transform 0.15s; will-change: transform, color; }
         .final-stars span.active { color: #f472b6; transform: scale(1.15); text-shadow: 0px 4px 12px rgba(244, 114, 182, 0.4); }
 
-        /* สไตล์สำหรับกล่องสุ่มการ์ดชะตา */
-        .card-result { background: #fdf4ff; border: 2px solid #f5d0fe; border-radius: 20px; padding: 25px 15px; text-align: center; box-shadow: 0 10px 20px rgba(217,70,239,0.15); margin: 20px 0; animation: popIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        @keyframes shuffle { 0% { transform: scale(1) rotate(0deg); } 25% { transform: scale(1.1) rotate(10deg); } 75% { transform: scale(1.1) rotate(-10deg); } 100% { transform: scale(1) rotate(0deg); } }
-        .shuffle-anim { animation: shuffle 0.3s infinite; }
+        /* สไตล์สำหรับกล่องแสดงรูปการ์ดชะตา */
+        .card-result { background: transparent; padding: 10px 0; text-align: center; animation: popIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .destiny-card-img { width: 100%; max-width: 280px; height: auto; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: block; margin: 0 auto; }
+        
+        @keyframes shuffle { 0% { transform: scale(1) rotate(0deg); } 25% { transform: scale(1.08) rotate(5deg); } 75% { transform: scale(1.08) rotate(-5deg); } 100% { transform: scale(1) rotate(0deg); } }
+        .shuffle-anim { animation: shuffle 0.25s infinite; }
 
         /* แอนิเมชันตอนสลับหน้า */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
@@ -190,20 +192,18 @@
             <button id="btnLogoutStamp" class="btn-logout" onclick="logout()">Logout</button>
         </div>
 
-        <!-- View 3: หน้าสุ่มการ์ดชะตา -->
+        <!-- View 3: หน้าสุ่มการ์ดชะตา (แสดงรูปภาพการ์ด) -->
         <div id="cardDrawView" class="hidden">
             <h2 id="txtDrawTitle" style="color: #8b5cf6; margin-top: 5px;">🔮 หมุนล้อชะตา</h2>
             
             <div id="drawIntroArea">
-                <div id="shufflingIcon" style="font-size: 90px; margin: 30px 0; text-shadow: 0 5px 15px rgba(0,0,0,0.1);">🎴</div>
+                <div id="shufflingIcon" style="font-size: 80px; margin: 25px 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));">🎴</div>
                 <button id="btnStartDraw" class="btn-gacha" onclick="startCardDraw()" style="font-size: 18px; padding: 16px;">เริ่มสุ่มการ์ด</button>
             </div>
 
             <div id="drawResultArea" class="card-result hidden">
-                <h3 id="txtYourCard" style="margin-top:0; color:#86198f;">การ์ดชะตาของคุณ</h3>
-                <div id="drawnEmoji" style="font-size: 80px; margin: 15px 0; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));"></div>
-                <h3 id="drawnName" style="color: #701a75; margin-bottom: 8px; font-size: 20px;"></h3>
-                <p id="drawnDesc" style="color: #a21caf; font-size: 15px; margin: 0; font-weight: 500;"></p>
+                <!-- พื้นที่แสดงภาพการ์ด (สามารถนำไฟล์รูปมาวางแทนที่ src ได้ตามเลขการ์ด 01.webp ถึง 16.webp) -->
+                <img id="drawnCardImage" src="" alt="Destiny Card" class="destiny-card-img">
             </div>
 
             <button id="btnBackFromDraw" class="btn-back-reward" onclick="switchView('reward')" style="margin-top: 25px;">⬅ กลับไปหน้าของรางวัล</button>
@@ -258,7 +258,6 @@
                 btnDrawCard: "🔮 Wheel of Fate",
                 txtDrawTitle: "🔮 Wheel of Fate",
                 btnStartDraw: "Draw a Card",
-                txtYourCard: "Your Destiny Card",
                 emoji: ["Confused", "Complex", "Okay", "Clear", "Super Clear"],
                 ratingResultTitle: "⭐ Your Rating",
                 ratingLabels: { 1: "😵‍💫 Confused", 2: "🤔 Complex", 3: "😐 Okay", 4: "🙂 Clear", 5: "🤩 Super Clear" },
@@ -299,7 +298,6 @@
                 btnDrawCard: "🔮 หมุนล้อชะตา",
                 txtDrawTitle: "🔮 หมุนล้อชะตา",
                 btnStartDraw: "เริ่มสุ่มการ์ด",
-                txtYourCard: "การ์ดชะตาของคุณ",
                 emoji: ["งงมาก", "แอบซับซ้อน", "พอได้อยู่", "เข้าใจดี", "เคลียร์สุดๆ"],
                 ratingResultTitle: "⭐ ผลการประเมินของคุณ",
                 ratingLabels: { 1: "😵‍💫 งงมาก", 2: "🤔 แอบซับซ้อน", 3: "😐 พอได้อยู่", 4: "🙂 เข้าใจดี", 5: "🤩 เคลียร์สุดๆ" },
@@ -315,23 +313,24 @@
             }
         };
 
+        // รายการการ์ดทั้ง 16 ใบ (สามารถระบุพาธไฟล์รูปภาพการ์ดได้ที่ฟิลد img)
         const DESTINY_CARDS = [
-            { id: 1, emj: "🌟", nameEn: "The Star", nameTh: "ดวงดาวแห่งความหวัง", descEn: "Good luck and inspiration will guide you.", descTh: "โชคดีและแรงบันดาลใจกำลังเดินทางมาหาคุณ" },
-            { id: 2, emj: "☀️", nameEn: "The Sun", nameTh: "พระอาทิตย์ส่องสว่าง", descEn: "Success and pure joy are waiting for you.", descTh: "ความสำเร็จและความสุขอันสดใสรอคุณอยู่" },
-            { id: 3, emj: "🌙", nameEn: "The Moon", nameTh: "พระจันทร์ลึกลับ", descEn: "Trust your intuition and inner voice.", descTh: "จงเชื่อในสัญชาตญาณและเสียงในใจของคุณ" },
-            { id: 4, emj: "🍀", nameEn: "Four-Leaf Clover", nameTh: "โคลเวอร์สี่แฉก", descEn: "An unexpected fortune will surprise you.", descTh: "ความโชคดีที่คาดไม่ถึงจะทำให้คุณประหลาดใจ" },
-            { id: 5, emj: "🦉", nameEn: "Wise Owl", nameTh: "นกฮูกผู้รอบรู้", descEn: "Wisdom and new knowledge are coming.", descTh: "สติปัญญาและความรู้ใหม่ๆ จะช่วยนำทางคุณ" },
-            { id: 6, emj: "🦋", nameEn: "Blue Butterfly", nameTh: "ผีเสื้อสีน้ำเงิน", descEn: "A beautiful transformation is happening.", descTh: "การเปลี่ยนแปลงไปสู่สิ่งที่ดีกว่ากำลังเกิดขึ้น" },
-            { id: 7, emj: "🌸", nameEn: "Pink Blossom", nameTh: "ดอกไม้เบ่งบาน", descEn: "Get ready for a wonderful new beginning.", descTh: "เตรียมพร้อมสำหรับการเริ่มต้นใหม่ที่สวยงาม" },
-            { id: 8, emj: "🕊️", nameEn: "White Dove", nameTh: "นกพิราบขาว", descEn: "Peace and harmony will fill your days.", descTh: "ความสงบสุขและความกลมกลืนจะเข้ามาในชีวิต" },
-            { id: 9, emj: "🔥", nameEn: "Eternal Flame", nameTh: "เปลวไฟนิรันดร์", descEn: "Your passion will drive you to greatness.", descTh: "พลังและแรงผลักดันอันแรงกล้าจะนำไปสู่ความยิ่งใหญ่" },
-            { id: 10, emj: "💧", nameEn: "Pure Water", nameTh: "หยดน้ำบริสุทธิ์", descEn: "Clarity and mental healing are yours.", descTh: "การเยียวยาและความชัดเจนในจิตใจคือของคุณ" },
-            { id: 11, emj: "🌳", nameEn: "Strong Tree", nameTh: "ต้นไม้ใหญ่", descEn: "Expect steady growth and stability.", descTh: "ความมั่นคงและการเจริญเติบโตอย่างยั่งยืน" },
-            { id: 12, emj: "⚡", nameEn: "Lightning Spark", nameTh: "สายฟ้าฟาด", descEn: "A sudden brilliant idea will strike you.", descTh: "ไอเดียสุดบรรเจิดและแรงบันดาลใจแบบฉับพลัน" },
-            { id: 13, emj: "👑", nameEn: "Golden Crown", nameTh: "มงกุฎทองคำ", descEn: "Leadership and victory are in your hands.", descTh: "ความเป็นผู้นำและชัยชนะจะอยู่ในมือคุณ" },
-            { id: 14, emj: "💎", nameEn: "Precious Gem", nameTh: "อัญมณีล้ำค่า", descEn: "You will discover your true value and wealth.", descTh: "คุณจะค้นพบคุณค่าในตัวเองและความมั่งคั่ง" },
-            { id: 15, emj: "🗝️", nameEn: "Magic Key", nameTh: "กุญแจวิเศษ", descEn: "You will unlock new doors of opportunity.", descTh: "คุณจะสามารถไขประตูสู่โอกาสใหม่ๆ ได้" },
-            { id: 16, emj: "🛡️", nameEn: "Aegis Shield", nameTh: "โล่พิทักษ์", descEn: "You are protected and completely safe.", descTh: "คุณจะได้รับการปกป้องและปลอดภัยจากอุปสรรค" }
+            { id: 1, img: "cards/01.webp" },
+            { id: 2, img: "cards/02.webp" },
+            { id: 3, img: "cards/03.webp" },
+            { id: 4, img: "cards/04.webp" },
+            { id: 5, img: "cards/05.webp" },
+            { id: 6, img: "cards/06.webp" },
+            { id: 7, img: "cards/07.webp" },
+            { id: 8, img: "cards/08.webp" },
+            { id: 9, img: "cards/09.webp" },
+            { id: 10, img: "cards/10.webp" },
+            { id: 11, img: "cards/11.webp" },
+            { id: 12, img: "cards/12.webp" },
+            { id: 13, img: "cards/13.webp" },
+            { id: 14, img: "cards/14.webp" },
+            { id: 15, img: "cards/15.webp" },
+            { id: 16, img: "cards/16.webp" }
         ];
 
         const firebaseConfig = {
@@ -479,7 +478,6 @@
             document.getElementById('btnDrawCard').innerText = l.btnDrawCard;
             document.getElementById('txtDrawTitle').innerText = l.txtDrawTitle;
             document.getElementById('btnStartDraw').innerText = l.btnStartDraw;
-            document.getElementById('txtYourCard').innerText = l.txtYourCard;
 
             if (currentUserCode) document.getElementById('displayUserCode').innerText = l.userIdPrefix + currentUserCode;
             
@@ -727,15 +725,17 @@
             const icon = document.getElementById('shufflingIcon');
             icon.classList.add('shuffle-anim');
             
+            // สลับไอคอนไพ่จำลองช่วงสับ
             const shuffleInterval = setInterval(() => {
-                icon.innerText = DESTINY_CARDS[Math.floor(Math.random() * 16)].emj;
+                const randomCard = DESTINY_CARDS[Math.floor(Math.random() * DESTINY_CARDS.length)];
+                icon.innerText = "🃏";
             }, 100);
 
             setTimeout(async () => {
                 clearInterval(shuffleInterval);
                 icon.classList.remove('shuffle-anim');
                 
-                const randomId = Math.floor(Math.random() * 16) + 1;
+                const randomId = Math.floor(Math.random() * DESTINY_CARDS.length) + 1;
                 
                 try {
                     await db.ref(`users/${currentUserCode}/drawnCardId`).set(randomId);
@@ -752,10 +752,8 @@
             const card = DESTINY_CARDS.find(c => c.id === cardId);
             
             if(card) {
-                document.getElementById('drawnEmoji').innerText = card.emj;
-                document.getElementById('drawnName').innerText = currentLang === 'en' ? card.nameEn : card.nameTh;
-                document.getElementById('drawnDesc').innerText = currentLang === 'en' ? card.descEn : card.descTh;
-                
+                // กำหนดที่อยู่ไฟล์รูปภาพ (เช่น "cards/01.webp")
+                document.getElementById('drawnCardImage').src = card.img;
                 document.getElementById('drawResultArea').classList.remove('hidden');
             }
         }
@@ -871,7 +869,7 @@
             btn.disabled = true;
 
             closeFinalAssessment();
-            switchView('reward'); // เด้งมาหน้า Reward Page ทันที
+            switchView('reward'); 
             
             try {
                 db.ref(`users/${currentUserCode}/finalIntentionRating`).set(finalSelectedRating);
