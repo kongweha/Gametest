@@ -106,7 +106,7 @@
 
         .display-stars { font-size: 14px; color: #d97706; margin-top: 15px; padding-top: 12px; border-top: 1px dashed #fcd34d; font-weight: bold; text-align: center;}
         
-        /* Success Banner ปรับเป็นสีเหลืองแบบรูปต้นฉบับ */
+        /* Success Banner */
         .success-banner { background-color: #fffbeb; border: 2px solid #f59e0b; color: #d97706; padding: 25px 15px; border-radius: 16px; margin: 15px 0; font-weight: bold; box-shadow: 0 4px 10px rgba(245,158,11,0.15); animation: fadeIn 0.3s ease;}
 
         /* สไตล์สำหรับกล่องประเมินรับรางวัล */
@@ -675,16 +675,8 @@
             
             html5QrCode.start(
                 { facingMode: "environment" }, 
-                { 
-                    fps: 10, 
-                    // --- แก้ปัญหาต้องสแกนใกล้ ---
-                    // ขยายกรอบสแกนอัตโนมัติให้กว้างขึ้น (75% ของความกว้างหน้าจอ)
-                    qrbox: (videoWidth, videoHeight) => {
-                        const minEdge = Math.min(videoWidth, videoHeight);
-                        return Math.floor(minEdge * 0.75);
-                    },
-                    aspectRatio: 1.0 // ช่วยจัดการสัดส่วนกล้องไม่ให้ภาพถูกบีบหรือยืด
-                },
+                // --- ตั้งค่ากล้องใหม่ กลับมาใช้แบบตายตัวเพื่อให้โฟกัสทำงาน 100% ---
+                { fps: 10, qrbox: 250 }, 
                 async (decodedText) => {
                     if (isProcessingScan) return;
                     const parts = decodedText.split('|');
