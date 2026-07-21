@@ -867,16 +867,19 @@
             if (finalSelectedRating === 0) return;
             const btn = document.getElementById('btnSubmitFinal');
             btn.disabled = true;
-
-            closeFinalAssessment();
-            switchView('reward'); 
-            
+        
+            // บันทึกคะแนนและสถานะลง Firebase
             try {
                 db.ref(`users/${currentUserCode}/finalIntentionRating`).set(finalSelectedRating);
                 db.ref(`users/${currentUserCode}/redeemTime`).set(Date.now());
-                db.ref(`users/${currentUserCode}/isRedeemed`).set(true);
+                db.ref(`users/${currentUserCode}/isRedeemed`).set(true).then(() => {
+                    // ปิด Modal และบังคับเปลี่ยนไปหน้า Reward ทันทีหลังบันทึกเสร็จสิ้น
+                    closeFinalAssessment();
+                    switchView('reward');
+                });
             } catch(e) {
                 console.error("Save Error", e);
+                closeFinalAssessment();
             } finally {
                 btn.disabled = false;
             }
