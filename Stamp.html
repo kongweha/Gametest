@@ -34,7 +34,8 @@
             position: absolute; width: 85px; height: 85px; border-radius: 50%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             text-align: center; font-size: 10px; font-weight: bold; line-height: 1.1;
-            padding: 5px; overflow: hidden; transition: 0.3s ease;
+            padding: 5px; overflow: hidden; transition: transform 0.3s ease; /* ปรับลดการ transition all เพื่อลดหน่วง */
+            will-change: transform;
         }
         
         .station-node.unstamped { border: 2px dashed #94a3b8; background-color: #f8fafc; color: #475569; cursor: pointer; }
@@ -52,10 +53,10 @@
         .st-2 { bottom: 45px; left: 0px; } 
         .st-3 { top: 45px; left: 0px; } 
 
-        button { padding: 14px 20px; border: none; border-radius: 14px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-bottom: 10px; transition: all 0.2s ease; }
-        button:active { transform: scale(0.98); }
+        button { padding: 14px 20px; border: none; border-radius: 14px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-bottom: 10px; transition: transform 0.1s ease, background-color 0.2s ease; will-change: transform; }
+        button:active { transform: scale(0.97); }
         .btn-primary { background-color: #3b82f6; color: white; box-shadow: 0 4px 6px rgba(59,130,246,0.25); }
-        .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; box-shadow: none; }
+        .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; box-shadow: none; transform: scale(1); }
         .btn-redeem { background-color: #f87171; color: white; margin-top: 15px; box-shadow: 0 4px 6px rgba(248,113,113,0.25); }
         .btn-redeem:disabled { background-color: #fca5a5; cursor: not-allowed; box-shadow: none; }
         .btn-cancel { background-color: #64748b; color: white; display: none; margin-top: 10px; }
@@ -65,28 +66,52 @@
         .hidden { display: none !important; }
         .user-info { background-color: #e0e7ff; padding: 8px 18px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #4338ca; display: inline-block; margin-bottom: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
         
-        /* กล่องเนื้อหาและเรตติ้ง (น่ารัก นุ่มนวล) */
-        .content-box { background-color: #f0fdf4; border: 2px solid #bbf7d0; color: #166534; padding: 18px; border-radius: 20px; margin-bottom: 15px; text-align: left; font-size: 14px; animation: fadeIn 0.3s ease; box-shadow: 0 4px 6px rgba(187,247,208,0.3);}
+        /* กล่องเนื้อหาและเรตติ้ง */
+        .content-box { background-color: #f0fdf4; border: 2px solid #bbf7d0; color: #166534; padding: 18px; border-radius: 20px; margin-bottom: 15px; text-align: left; font-size: 14px; animation: fadeIn 0.2s ease; box-shadow: 0 4px 6px rgba(187,247,208,0.3);}
         .content-box h3 { margin-top: 0; color: #15803d; margin-bottom: 8px; font-size: 16px;}
         
-        .rating-box { background-color: #fffbeb; border: 2px solid #fde68a; padding: 22px 15px; border-radius: 20px; margin: 15px 0; text-align: center; animation: fadeIn 0.3s ease; box-shadow: 0 6px 12px rgba(253,230,138,0.3);}
+        .rating-box { background-color: #fffbeb; border: 2px solid #fde68a; padding: 22px 12px; border-radius: 20px; margin: 15px 0; text-align: center; animation: fadeIn 0.2s ease; box-shadow: 0 6px 12px rgba(253,230,138,0.3);}
         
-        /* ตัด filter ออก ใช้ opacity ลดอาการหน่วง และทำไฮไลท์สีเหลืองอ่อน */
-        .stars { display: flex; justify-content: center; gap: 6px; font-size: 11px; margin: 20px 0; cursor: pointer; }
-        .stars span { transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0.35; padding: 10px 4px; border-radius: 12px; flex: 1; border: 2px solid transparent; color: #78716c; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; line-height: 1.3;}
-        .stars span.active { opacity: 1; transform: scale(1.1); font-weight: bold; color: #b45309; background-color: #fef08a; border-color: #fde047; box-shadow: 0 4px 8px rgba(253, 224, 71, 0.3); }
-        .stars span .emoji { font-size: 32px; margin-bottom: 6px; }
-        
+        /* ระบบ Emoji ประเมินฐาน (Hardware acceleration ลดอาการหน่วง และชิดขอบ) */
+        .stars { display: flex; justify-content: center; gap: 6px; margin: 15px 0; cursor: pointer; padding: 0 4px; }
+        .stars span { 
+            will-change: transform, filter, opacity, background-color; /* ดึงพลังการ์ดจอมาใช้ */
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), filter 0.2s ease, opacity 0.2s ease, background-color 0.2s ease; 
+            opacity: 0.6; 
+            filter: grayscale(100%); /* ตอนยังไม่กดให้เป็นสีเทา */
+            padding: 8px 2px; 
+            border-radius: 12px; 
+            flex: 1; 
+            border: 2px solid transparent; 
+            color: #78716c; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start; 
+            line-height: 1.1; /* บีบระยะห่างข้อความ */
+        }
+        .stars span.active { 
+            opacity: 1; 
+            filter: grayscale(0%); /* กดแล้วเป็นสีเต็ม */
+            transform: scale(1.06); /* ขยายขนาดลงเล็กน้อย เพื่อไม่ให้ชนขอบ */
+            font-weight: bold; 
+            color: #b45309; 
+            background-color: #fef08a; 
+            border-color: #fde047; 
+            box-shadow: 0 4px 8px rgba(253, 224, 71, 0.3); 
+        }
+        .stars span .emoji { font-size: 26px; margin-bottom: 2px; } /* ลดระยะห่างด้านล่าง emoji ให้ชิดคำ */
+        .stars span .rating-label { font-size: 11px; }
+
         .display-stars { font-size: 14px; color: #d97706; margin-top: 15px; padding-top: 12px; border-top: 1px dashed #fcd34d; font-weight: bold; text-align: center;}
         
         .success-banner { background-color: #f0fdf4; border: 2px solid #86efac; color: #166534; padding: 15px; border-radius: 16px; margin: 15px 0; font-size: 16px; font-weight: bold; box-shadow: 0 4px 6px rgba(134,239,172,0.2);}
 
-        /* สไตล์สำหรับกล่องประเมินรับรางวัลน่ารักๆ (ชมพูอ่อน) */
+        /* สไตล์สำหรับกล่องประเมินรับรางวัล */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(3px); }
         .modal-content { background: #fff5f8; border: 3px solid #fbcfe8; padding: 30px 25px; border-radius: 24px; text-align: center; max-width: 400px; width: 100%; box-shadow: 0 15px 30px rgba(244,114,182,0.2); }
         .final-stars { display: flex; justify-content: center; gap: 10px; font-size: 42px; margin: 20px 0; cursor: pointer; color: #e2e8f0; text-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .final-stars span { transition: color 0.2s, transform 0.2s; }
-        /* สีชมพูอ่อนสำหรับดาวที่ถูกเลือก */
+        .final-stars span { transition: color 0.15s, transform 0.15s; will-change: transform, color; }
         .final-stars span.active { color: #f472b6; transform: scale(1.15); text-shadow: 0px 4px 12px rgba(244, 114, 182, 0.4); }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
@@ -95,8 +120,8 @@
             .otp-box { width: 38px; height: 45px; font-size: 18px; }
             .otp-container { gap: 5px; }
             .map-container { transform: scale(0.9); }
-            .stars span { font-size: 10px; }
-            .stars span .emoji { font-size: 26px; }
+            .stars span .emoji { font-size: 22px; }
+            .stars span .rating-label { font-size: 9px; }
             .final-stars { font-size: 36px; }
         }
     </style>
@@ -140,11 +165,11 @@
                 <h3 id="txtRatingHeader" style="margin-top:0; color: #b45309;">⭐ How was this station?</h3>
                 <div id="ratingTitle" style="font-weight: bold; color: #92400e; margin-bottom: 10px; font-size: 16px;"></div>
                 <div class="stars" id="starContainer">
-                    <span data-value="1"><span class="emoji">😵‍💫</span><div id="emj1">Confused</div></span>
-                    <span data-value="2"><span class="emoji">🤔</span><div id="emj2">Complex</div></span>
-                    <span data-value="3"><span class="emoji">😐</span><div id="emj3">Okay</div></span>
-                    <span data-value="4"><span class="emoji">🙂</span><div id="emj4">Clear</div></span>
-                    <span data-value="5"><span class="emoji">🤩</span><div id="emj5">Super Clear</div></span>
+                    <span data-value="1"><div class="emoji">😵‍💫</div><div class="rating-label" id="emj1">Confused</div></span>
+                    <span data-value="2"><div class="emoji">🤔</div><div class="rating-label" id="emj2">Complex</div></span>
+                    <span data-value="3"><div class="emoji">😐</div><div class="rating-label" id="emj3">Okay</div></span>
+                    <span data-value="4"><div class="emoji">🙂</div><div class="rating-label" id="emj4">Clear</div></span>
+                    <span data-value="5"><div class="emoji">🤩</div><div class="rating-label" id="emj5">Super Clear</div></span>
                 </div>
                 <button id="btnSubmitRating" class="btn-primary" disabled onclick="submitRating()">Submit Rating</button>
             </div>
@@ -215,7 +240,7 @@
                     errLength: "Please enter all 6 digits.",
                     errNotFound: "❌ Code not found in the system.",
                     errConn: "Database connection error.",
-                    errQrExpire: "❌ QR Code expired (older than 1.30 mins). Please scan the latest QR.",
+                    errQrExpire: "❌ QR Code expired. Please scan the latest QR.",
                     errQrFormat: "❌ Invalid QR code format.",
                     errQrWrong: "❌ Wrong QR code for this station.",
                     errSave: "Error saving data. Please try again.",
@@ -251,7 +276,7 @@
                     errLength: "กรุณากรอกรหัสให้ครบ 6 หลัก",
                     errNotFound: "❌ ไม่พบรหัสนี้ในระบบ",
                     errConn: "เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล",
-                    errQrExpire: "❌ QR Code นี้หมดอายุแล้ว (อายุเกิน 1.30 นาที)\nกรุณาสแกน QR Code ล่าสุด",
+                    errQrExpire: "❌ QR Code นี้หมดอายุแล้ว\nกรุณาสแกน QR Code ล่าสุด",
                     errQrFormat: "❌ รูปแบบ QR Code ไม่ถูกต้อง",
                     errQrWrong: "❌ QR Code ไม่ถูกต้องสำหรับฐานนี้",
                     errSave: "เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่",
@@ -342,13 +367,11 @@
         function applyLanguage() {
             const l = LANG[currentLang];
             
-            // Toggle active class on buttons
             document.getElementById('btnLangEn').className = currentLang === 'en' ? 'active' : '';
             document.getElementById('btnLangTh').className = currentLang === 'th' ? 'active' : '';
             document.getElementById('btnLangEn2').className = currentLang === 'en' ? 'active' : '';
             document.getElementById('btnLangTh2').className = currentLang === 'th' ? 'active' : '';
 
-            // Update Texts
             document.getElementById('txtLoginTitle').innerText = l.loginTitle;
             document.getElementById('btnLogin').innerText = l.loginBtn;
             document.getElementById('txtCardTitle').innerText = l.cardTitle;
@@ -356,7 +379,6 @@
             document.getElementById('btnCancel').innerText = l.cancelScanBtn;
             document.getElementById('btnLogout').innerText = l.logoutBtn;
             
-            // Emoji Labels
             document.getElementById('txtRatingHeader').innerText = l.ratingHeader;
             document.getElementById('btnSubmitRating').innerText = l.ratingSubmitBtn;
             document.getElementById('emj1').innerText = l.emoji[0];
@@ -365,18 +387,14 @@
             document.getElementById('emj4').innerText = l.emoji[3];
             document.getElementById('emj5').innerText = l.emoji[4];
 
-            // Final Assessment
             document.getElementById('txtFinalHeader').innerText = l.finalHeader;
             document.getElementById('txtFinalDesc').innerText = l.finalDesc;
             document.getElementById('btnSubmitFinal').innerText = l.finalSubmit;
             document.getElementById('btnCancelFinal').innerText = l.finalCancel;
             
-            if (currentUserCode) {
-                document.getElementById('displayUserCode').innerText = l.userIdPrefix + currentUserCode;
-            }
+            if (currentUserCode) document.getElementById('displayUserCode').innerText = l.userIdPrefix + currentUserCode;
             if (globalUserData) {
-                renderUI(globalUserData); // Refresh UI for language update
-                // Refresh open content box if any
+                renderUI(globalUserData);
                 const activeId = document.getElementById('contentBox').dataset.activeId;
                 if(activeId !== undefined && !document.getElementById('contentBox').classList.contains('hidden')) {
                     toggleStationContent(activeId, true);
@@ -410,7 +428,7 @@
             });
         });
 
-        // ฟังก์ชัน Login
+        // ฟังก์ชัน Login (ปรับ Optimistic UI ไม่รอโหลด)
         async function login() {
             if (isLoggingIn) return; 
             const l = LANG[currentLang];
@@ -425,13 +443,16 @@
                 const snapshot = await db.ref(`users/${input}`).once('value');
                 if (snapshot.exists()) {
                     currentUserCode = input;
-                    document.getElementById('displayUserCode').innerText = l.userIdPrefix + currentUserCode;
+                    const userData = snapshot.val();
                     
-                    if (!snapshot.val().loginTime) await db.ref(`users/${currentUserCode}/loginTime`).set(Date.now());
-
+                    // เปลี่ยนหน้าทันที ไม่ต้องรอเขียนลงฐานข้อมูล ทำให้รู้สึกเร็วขึ้น
                     document.getElementById('loginScreen').classList.add('hidden');
                     document.getElementById('stampScreen').classList.remove('hidden');
+                    document.getElementById('displayUserCode').innerText = l.userIdPrefix + currentUserCode;
                     
+                    // สั่งเขียนเวลาล็อกอินเป็น background
+                    if (!userData.loginTime) db.ref(`users/${currentUserCode}/loginTime`).set(Date.now());
+
                     dbRef = db.ref(`users/${currentUserCode}`);
                     dbRef.on('value', (snap) => {
                         if(snap.exists()) {
@@ -458,7 +479,6 @@
             let count = 0;
             const userStations = userData.stations || {}; 
             
-            // แสดงแผนที่ตลอด (ไม่ซ่อนแม้จะ Redeem แล้ว)
             mapContainer.innerHTML = ''; 
             let posMap = {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6}; 
             
@@ -495,13 +515,12 @@
 
             document.getElementById('statusText').innerText = count === 7 ? l.completedText : l.stampStatusText.replace('{count}', count);
             
-            // การจัดการปุ่ม Redeem และ Banner
             if (userData.isRedeemed) {
                 document.getElementById('successBanner').classList.remove('hidden');
                 document.getElementById('successBanner').innerHTML = l.successMsg;
                 btnRedeem.disabled = true;
                 btnRedeem.innerText = l.redeemedBtn;
-                btnRedeem.style.backgroundColor = "#10b981"; // เปลี่ยนเป็นสีเขียวเมื่อรับแล้ว
+                btnRedeem.style.backgroundColor = "#10b981";
                 document.getElementById('subStatusText').classList.add('hidden');
             } else {
                 document.getElementById('successBanner').classList.add('hidden');
@@ -512,7 +531,6 @@
             }
         }
 
-        // แสดงเนื้อหาและดาวที่ให้
         function toggleStationContent(stationId, forceOpen = false) {
             const box = document.getElementById('contentBox');
             const l = LANG[currentLang];
@@ -522,25 +540,21 @@
                 box.classList.add('hidden'); 
             } else {
                 box.dataset.activeId = stationId;
-                
                 let ratingHtml = "";
                 if (globalUserData && globalUserData.ratings && globalUserData.ratings[stationId]) {
                     const starCount = globalUserData.ratings[stationId];
                     const ratingResult = l.ratingLabels[starCount] || "";
-                    
                     ratingHtml = `
                     <div class="display-stars">
                         ${l.ratingResultTitle}
                         <div style="font-size:20px; color:#b45309; margin-top:5px; font-weight:normal;">${ratingResult}</div>
                     </div>`;
                 }
-
                 box.innerHTML = `<h3>📖 ${STATIONS[stationId].name}</h3><p>${contentText}</p>${ratingHtml}`;
                 box.classList.remove('hidden'); 
             }
         }
 
-        // ระบบให้คะแนนฐาน (Emoji)
         function showRatingBox(id, name) {
             const l = LANG[currentLang];
             pendingRatingStationId = id;
@@ -565,35 +579,38 @@
             });
         }
 
-        async function submitRating() {
+        // ปรับแก้ Optimistic UI ไม่ให้ผู้ใช้รอจังหวะส่งฐานข้อมูล
+        function submitRating() {
             if (selectedRating === 0 || pendingRatingStationId === null) return;
             const l = LANG[currentLang];
             const btn = document.getElementById('btnSubmitRating');
             btn.disabled = true;
-            btn.innerText = l.saving;
 
+            const targetId = pendingRatingStationId;
+            const targetName = pendingRatingStationName;
+            const currentRating = selectedRating;
+
+            // 1. เปลี่ยนหน้าจอทันที (ให้ความรู้สึกว่าบันทึกไวมาก)
+            document.getElementById('ratingBox').classList.add('hidden');
+            document.getElementById('mapWrapper').style.display = 'flex';
+            toggleStationContent(targetId, true);
+            pendingRatingStationId = null;
+
+            // 2. ทำงานส่งฐานข้อมูลอยู่เบื้องหลัง (Background writing)
             try {
-                await db.ref(`users/${currentUserCode}/stations/${pendingRatingStationId}`).set(true);
-                await db.ref(`users/${currentUserCode}/ratings/${pendingRatingStationId}`).set(selectedRating);
-                
+                db.ref(`users/${currentUserCode}/stations/${targetId}`).set(true);
+                db.ref(`users/${currentUserCode}/ratings/${targetId}`).set(currentRating);
                 try {
-                    const scanData = { id: pendingRatingStationId, name: pendingRatingStationName, time: Date.now() };
-                    await db.ref(`users/${currentUserCode}/scanHistory`).push(scanData);
+                    db.ref(`users/${currentUserCode}/scanHistory`).push({ id: targetId, name: targetName, time: Date.now() });
                 } catch (historyErr) {}
-
-                document.getElementById('ratingBox').classList.add('hidden');
-                document.getElementById('mapWrapper').style.display = 'flex';
-                toggleStationContent(pendingRatingStationId, true);
-                
             } catch(e) {
-                alert(l.alerts.errSave);
+                console.error("Save Error", e);
             } finally {
                 btn.innerText = l.ratingSubmitBtn;
-                pendingRatingStationId = null;
             }
         }
 
-        // ระบบสแกน
+        // ระบบสแกน QR Code
         function openScannerFor(stationIndex) {
             if (isScannerInitializing || (html5QrCode && html5QrCode.isScanning) || (globalUserData && globalUserData.isRedeemed)) return;
             const l = LANG[currentLang];
@@ -677,7 +694,7 @@
             isProcessingScan = false;
         }
 
-        // ระบบรับรางวัล
+        // ระบบรับรางวัล (Optimistic UI)
         function redeemReward() {
             finalSelectedRating = 0;
             document.getElementById('finalAssessmentOverlay').classList.remove('hidden');
@@ -699,20 +716,23 @@
             document.getElementById('finalAssessmentOverlay').classList.add('hidden');
         }
 
-        async function submitFinalAssessment() {
+        function submitFinalAssessment() {
             if (finalSelectedRating === 0) return;
             const l = LANG[currentLang];
             const btn = document.getElementById('btnSubmitFinal');
             btn.disabled = true;
             btn.innerText = l.saving;
 
+            // เปลี่ยน UI ทันที
+            closeFinalAssessment();
+            
+            // ส่งข้อมูลเบื้องหลัง
             try {
-                await db.ref(`users/${currentUserCode}/finalIntentionRating`).set(finalSelectedRating);
-                await db.ref(`users/${currentUserCode}/redeemTime`).set(Date.now());
-                await db.ref(`users/${currentUserCode}/isRedeemed`).set(true);
-                closeFinalAssessment();
+                db.ref(`users/${currentUserCode}/finalIntentionRating`).set(finalSelectedRating);
+                db.ref(`users/${currentUserCode}/redeemTime`).set(Date.now());
+                db.ref(`users/${currentUserCode}/isRedeemed`).set(true);
             } catch(e) {
-                alert(l.alerts.errSave);
+                console.error("Save Error", e);
             } finally {
                 btn.disabled = false;
                 btn.innerText = l.finalSubmit;
@@ -740,7 +760,6 @@
             } catch (error) { location.reload(); }
         }
 
-        // เรียกใช้ตอนเริ่มต้นเพื่อโหลดภาษา
         applyLanguage();
     </script>
 </body>
