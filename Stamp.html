@@ -116,7 +116,10 @@
         .final-stars span { transition: color 0.15s, transform 0.15s; will-change: transform, color; }
         .final-stars span.active { color: #f472b6; transform: scale(1.15); text-shadow: 0px 4px 12px rgba(244, 114, 182, 0.4); }
 
+        /* แอนิเมชันตอนสลับหน้า */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        .view-animate { animation: popIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
 
         @media (max-width: 360px) {
             .otp-box { width: 38px; height: 45px; font-size: 18px; }
@@ -163,7 +166,6 @@
                 <div id="txtSuccessSub" style="font-size: 15px; font-weight: normal;">(ไม่สามารถเล่นซ้ำได้)</div>
             </div>
             
-            <!-- จุดสำหรับเพิ่มแผนที่รับของรางวัลในอนาคต -->
             <div id="rewardMapPlaceholder" style="margin: 20px 0; padding: 25px 15px; border: 2px dashed #cbd5e1; border-radius: 16px; color: #94a3b8; font-size: 14px; background-color: #f8fafc;">
                 <div id="txtMapPlaceholder">[ พื้นที่สำหรับใส่แผนที่จุดรับของรางวัล ]</div>
             </div>
@@ -364,7 +366,6 @@
             }
         ];
 
-        // --- ระบบโหลดภาพล่วงหน้า (Preload Images) แก้ปัญหาภาพขึ้นช้า ---
         window.addEventListener('load', () => {
             STATIONS.forEach(st => {
                 const img1 = new Image(); img1.src = st.imgUnstamped;
@@ -387,14 +388,26 @@
         let finalSelectedRating = 0;
         let currentScreenView = null; 
 
+        // ระบบสลับหน้าพร้อมแอนิเมชัน
         function switchView(viewName) {
             currentScreenView = viewName;
+            const rewardView = document.getElementById('rewardView');
+            const stampView = document.getElementById('stampView');
+            
             if (viewName === 'reward') {
-                document.getElementById('rewardView').classList.remove('hidden');
-                document.getElementById('stampView').classList.add('hidden');
+                rewardView.classList.remove('hidden');
+                stampView.classList.add('hidden');
+                
+                rewardView.classList.remove('view-animate');
+                void rewardView.offsetWidth; 
+                rewardView.classList.add('view-animate');
             } else {
-                document.getElementById('rewardView').classList.add('hidden');
-                document.getElementById('stampView').classList.remove('hidden');
+                rewardView.classList.add('hidden');
+                stampView.classList.remove('hidden');
+                
+                stampView.classList.remove('view-animate');
+                void stampView.offsetWidth; 
+                stampView.classList.add('view-animate');
             }
         }
 
@@ -675,7 +688,6 @@
             
             html5QrCode.start(
                 { facingMode: "environment" }, 
-                // --- ตั้งค่ากล้องใหม่ กลับมาใช้แบบตายตัวเพื่อให้โฟกัสทำงาน 100% ---
                 { fps: 10, qrbox: 250 }, 
                 async (decodedText) => {
                     if (isProcessingScan) return;
@@ -763,14 +775,14 @@
 
         function submitFinalAssessment() {
             if (finalSelectedRating === 0) return;
-            const l = LANG[currentLang];
             const btn = document.getElementById('btnSubmitFinal');
             btn.disabled = true;
-            btn.innerText = l.saving;
 
+            // ปิด Modal ประเมิน และสลับหน้าไป Reward เลยทันที
             closeFinalAssessment();
-            currentScreenView = 'reward'; 
+            switchView('reward'); 
             
+            // ส่งข้อมูลไปเซิร์ฟเวอร์แบบเบื้องหลัง
             try {
                 db.ref(`users/${currentUserCode}/finalIntentionRating`).set(finalSelectedRating);
                 db.ref(`users/${currentUserCode}/redeemTime`).set(Date.now());
@@ -779,7 +791,6 @@
                 console.error("Save Error", e);
             } finally {
                 btn.disabled = false;
-                btn.innerText = l.finalSubmit;
             }
         }
 
@@ -789,6 +800,8 @@
                 if(dbRef) { dbRef.off(); dbRef = null; }
                 currentUserCode = ""; globalUserData = null;
                 currentScreenView = null;
+                pendingRatingStationId = null;
+                selectedRating = 0;
                 otpInputs.forEach(box => box.value = '');
                 
                 const l = LANG[currentLang];
@@ -799,6 +812,8 @@
                 document.getElementById('loginScreen').classList.remove('hidden');
                 document.getElementById('contentBox').classList.add('hidden');
                 document.getElementById('ratingBox').classList.add('hidden');
+                document.getElementById('mapWrapper').style.display = 'flex'; // สำคัญ: รีเซ็ตแผนที่กลับมาเสมอ
+                
                 closeFinalAssessment(); 
             } catch (error) { location.reload(); }
         }
