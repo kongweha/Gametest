@@ -147,7 +147,7 @@
         <button id="btnLogin" class="btn-primary" onclick="login()">Login</button>
     </div>
 
-    <!-- หน้าต่างสแกนสะสมแต้ม (ใช้งานร่วมกับหน้ารับรางวัล) -->
+    <!-- หน้าต่างสแกนสะสมแต้ม -->
     <div class="container hidden" id="stampScreen">
         <div class="lang-toggle" onclick="toggleLanguage()">
             <span id="btnLangEn2" class="active">EN</span> | <span id="btnLangTh2">TH</span>
@@ -156,7 +156,7 @@
         <h2 id="txtCardTitle">🎉 Stamp Card</h2>
         <div class="user-info" id="displayUserCode">User ID: XXXXXX</div>
         
-        <!-- View 1: หน้าของรางวัล (จะโชว์เฉพาะคนที่รับรางวัลแล้ว) -->
+        <!-- View 1: หน้าของรางวัล -->
         <div id="rewardView" class="hidden">
             <div class="success-banner">
                 <div id="txtSuccessTitle" style="font-size: 18px; margin-bottom: 8px;">🎁 รับของรางวัลเรียบร้อยแล้ว!</div>
@@ -166,14 +166,13 @@
             <!-- จุดสำหรับเพิ่มแผนที่รับของรางวัลในอนาคต -->
             <div id="rewardMapPlaceholder" style="margin: 20px 0; padding: 25px 15px; border: 2px dashed #cbd5e1; border-radius: 16px; color: #94a3b8; font-size: 14px; background-color: #f8fafc;">
                 <div id="txtMapPlaceholder">[ พื้นที่สำหรับใส่แผนที่จุดรับของรางวัล ]</div>
-                <!-- ใส่ <img src="URL_ของแผนที่"> ตรงนี้ได้เลยครับ -->
             </div>
 
             <button id="btnViewStamps" class="btn-primary" onclick="switchView('stamp')">ดูบัตรสะสมแต้ม</button>
             <button id="btnLogoutReward" class="btn-logout" onclick="logout()">ออกจากระบบ</button>
         </div>
 
-        <!-- View 2: หน้าสแกนฐาน (โชว์เป็นหลักตอนเล่นเกม) -->
+        <!-- View 2: หน้าสแกนฐาน -->
         <div id="stampView">
             <div id="statusText" style="font-weight: bold; margin-bottom: 5px; color: #10b981; font-size: 18px;">Current Stamps: 0 / 7</div>
             <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;" id="subStatusText">(Click on unstamped circles to scan QR Code)</div>
@@ -202,7 +201,6 @@
             <button id="btnCancel" class="btn-cancel" onclick="stopScan()">❌ Cancel Camera</button>
             
             <button id="btnRedeem" class="btn-redeem" onclick="redeemReward()" disabled>🎁 Redeem Reward</button>
-            <!-- ปุ่มกลับหน้าของรางวัล (จะโชว์เมื่อสลับมาดูแผนที่หลังรับรางวัลแล้ว) -->
             <button id="btnBackToReward" class="btn-back-reward" style="display:none;" onclick="switchView('reward')">⬅ กลับไปหน้าของรางวัล</button>
             <button id="btnLogoutStamp" class="btn-logout" onclick="logout()">Logout</button>
         </div>
@@ -309,7 +307,6 @@
             }
         };
 
-        // ตั้งค่า Firebase
         const firebaseConfig = {
           apiKey: "AIzaSyAJlt9qKkkUqPrQL7RLoRAPO-ToYwY7Q2o",
           authDomain: "eventstampcard.firebaseapp.com",
@@ -367,6 +364,14 @@
             }
         ];
 
+        // --- ระบบโหลดภาพล่วงหน้า (Preload Images) แก้ปัญหาภาพขึ้นช้า ---
+        window.addEventListener('load', () => {
+            STATIONS.forEach(st => {
+                const img1 = new Image(); img1.src = st.imgUnstamped;
+                const img2 = new Image(); img2.src = st.imgStamped;
+            });
+        });
+
         let currentUserCode = "";
         let html5QrCode;
         let dbRef = null;
@@ -380,9 +385,8 @@
         let pendingRatingStationName = null;
         let selectedRating = 0;
         let finalSelectedRating = 0;
-        let currentScreenView = null; // ติดตามสถานะหน้าจอว่าโชว์ 'stamp' หรือ 'reward'
+        let currentScreenView = null; 
 
-        // สลับ View ระหว่างหน้า Stamp และหน้ารับรางวัล
         function switchView(viewName) {
             currentScreenView = viewName;
             if (viewName === 'reward') {
@@ -394,7 +398,6 @@
             }
         }
 
-        // ระบบเปลี่ยนภาษา
         function toggleLanguage() {
             currentLang = currentLang === 'en' ? 'th' : 'en';
             applyLanguage();
@@ -445,7 +448,6 @@
             }
         }
 
-        // ระบบกรอกโค้ด
         const otpInputs = document.querySelectorAll('.otp-box');
         otpInputs.forEach((input, index) => {
             input.addEventListener('input', function() {
@@ -471,7 +473,6 @@
             });
         });
 
-        // ฟังก์ชัน Login 
         async function login() {
             if (isLoggingIn) return; 
             const l = LANG[currentLang];
@@ -487,7 +488,7 @@
                 if (snapshot.exists()) {
                     currentUserCode = input;
                     const userData = snapshot.val();
-                    currentScreenView = null; // เคลียร์ State หน้าจอ
+                    currentScreenView = null; 
                     
                     document.getElementById('loginScreen').classList.add('hidden');
                     document.getElementById('stampScreen').classList.remove('hidden');
@@ -511,7 +512,6 @@
             }
         }
 
-        // อัปเดตหน้าจอและการจัดวาง UI
         function renderUI(userData) {
             if (!userData) return;
             const l = LANG[currentLang];
@@ -559,15 +559,13 @@
 
             document.getElementById('statusText').innerText = count === 7 ? l.completedText : l.stampStatusText.replace('{count}', count);
             
-            // จัดการกรณีผู้ใช้ "รับรางวัลแล้ว" (Redeemed) หรือ "ยังเล่นอยู่"
             if (userData.isRedeemed) {
                 btnRedeem.classList.add('hidden');
                 btnBackToReward.style.display = 'block';
-                btnLogoutStamp.style.display = 'none'; // ซ่อนปุ่มออกระบบในหน้าสแตมป์ เพราะจะให้กดตอนอยู่หน้ารับของ
+                btnLogoutStamp.style.display = 'none'; 
                 
-                // ให้ Default เป็นหน้า Reward หากยังไม่ได้สลับ
                 if (!currentScreenView) switchView('reward');
-                else switchView(currentScreenView); // เคารพ state เดิมถ้าผู้ใช้เพิ่งกดปุ่มสลับ
+                else switchView(currentScreenView); 
             } else {
                 btnRedeem.classList.remove('hidden');
                 btnBackToReward.style.display = 'none';
@@ -657,7 +655,6 @@
             }
         }
 
-        // ระบบสแกน QR Code
         function openScannerFor(stationIndex) {
             if (isScannerInitializing || (html5QrCode && html5QrCode.isScanning) || (globalUserData && globalUserData.isRedeemed)) return;
             const l = LANG[currentLang];
@@ -677,7 +674,17 @@
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
             
             html5QrCode.start(
-                { facingMode: "environment" }, { fps: 10, qrbox: 230 },
+                { facingMode: "environment" }, 
+                { 
+                    fps: 10, 
+                    // --- แก้ปัญหาต้องสแกนใกล้ ---
+                    // ขยายกรอบสแกนอัตโนมัติให้กว้างขึ้น (75% ของความกว้างหน้าจอ)
+                    qrbox: (videoWidth, videoHeight) => {
+                        const minEdge = Math.min(videoWidth, videoHeight);
+                        return Math.floor(minEdge * 0.75);
+                    },
+                    aspectRatio: 1.0 // ช่วยจัดการสัดส่วนกล้องไม่ให้ภาพถูกบีบหรือยืด
+                },
                 async (decodedText) => {
                     if (isProcessingScan) return;
                     const parts = decodedText.split('|');
@@ -741,7 +748,6 @@
             isProcessingScan = false;
         }
 
-        // เปิด Modal ประเมินก่อนรับรางวัล
         function redeemReward() {
             finalSelectedRating = 0;
             document.getElementById('finalAssessmentOverlay').classList.remove('hidden');
@@ -763,7 +769,6 @@
             document.getElementById('finalAssessmentOverlay').classList.add('hidden');
         }
 
-        // พอกดยืนยันปุ๊ป บันทึกฐานข้อมูล และบังคับให้โชว์หน้ากล่องสีเหลือง
         function submitFinalAssessment() {
             if (finalSelectedRating === 0) return;
             const l = LANG[currentLang];
@@ -772,7 +777,7 @@
             btn.innerText = l.saving;
 
             closeFinalAssessment();
-            currentScreenView = 'reward'; // บังคับสลับไปหน้า Reward เลยหลังส่งข้อมูล
+            currentScreenView = 'reward'; 
             
             try {
                 db.ref(`users/${currentUserCode}/finalIntentionRating`).set(finalSelectedRating);
